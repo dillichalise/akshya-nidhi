@@ -16,3 +16,22 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+/* Tailwind v4 resets buttons to the default cursor; restore a pointer on anything clickable. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  summary,
+  select,
+  label[for],
+  input[type="date"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    cursor: pointer;
+  }
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}

@@ -1,19 +1,17 @@
 import "server-only";
-import { neon } from "@neondatabase/serverless";
-import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
 import { env } from "@/env";
-import * as schema from "./schema";
+import { connect, type Db } from "./connect";
 
-type Db = NeonHttpDatabase<typeof schema>;
-let _db: Db | undefined;
+// Kept on globalThis so Next's dev-mode hot reloading doesn't open a new pool on every edit.
+const globalForDb = globalThis as unknown as { __db?: Db };
 
-/** Lazily-created Drizzle client (Neon HTTP driver — good fit for serverless). */
+/** Lazily-created Drizzle client (Neon HTTP in the cloud, node-postgres for a local DB). */
 export function db(): Db {
-  _db ??= drizzle(neon(env().DATABASE_URL), { schema });
-  return _db;
+  globalForDb.__db ??= connect(env().DATABASE_URL).db;
+  return globalForDb.__db;
 }
 
 /** Test hook: lets query tests run against an in-process Postgres (PGlite). */
 export function __setDbForTests(instance: unknown) {
-  _db = instance as Db;
+  globalForDb.__db = instance as Db;
 }

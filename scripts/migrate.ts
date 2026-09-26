@@ -1,12 +1,18 @@
 import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
-import { migrate } from "drizzle-orm/neon-http/migrator";
+import { migrate as migrateNeon } from "drizzle-orm/neon-http/migrator";
+import { migrate as migratePg } from "drizzle-orm/node-postgres/migrator";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import { connect, isLocalUrl } from "../src/db/connect";
 
 async function main() {
-  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not set");
-  await migrate(drizzle(neon(process.env.DATABASE_URL)), { migrationsFolder: "./drizzle" });
-  console.log("Migrations applied.");
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL is not set");
+  const { db, close } = connect(url);
+  const folder = { migrationsFolder: "./drizzle" };
+  if (isLocalUrl(url)) await migratePg(db as unknown as NodePgDatabase, folder);
+  else await migrateNeon(db, folder);
+  await close();
+  console.log(`Migrations applied (${isLocalUrl(url) ? "local" : "remote"} database).`);
 }
 main().catch((e) => {
   console.error(e);

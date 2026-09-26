@@ -1,7 +1,6 @@
 import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
 import { and, eq, like } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/neon-http";
+import { connect } from "../src/db/connect";
 import { donations, users } from "../src/db/schema";
 
 // Adds (or removes) clearly-tagged sample donations for demos/testing.
@@ -25,12 +24,13 @@ function nepalDate(daysAgo: number) {
 
 async function main() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not set");
-  const db = drizzle(neon(process.env.DATABASE_URL));
+  const { db, close } = connect(process.env.DATABASE_URL);
   const arg = process.argv[2];
 
   if (arg === "--remove") {
     const removed = await db.delete(donations).where(like(donations.remarks, `${TAG}%`)).returning({ id: donations.id });
     console.log(`Removed ${removed.length} sample donations.`);
+    await close();
     return;
   }
 
@@ -65,6 +65,7 @@ async function main() {
   for (let i = 0; i < rows.length; i += 50) await db.insert(donations).values(rows.slice(i, i + 50));
   const total = rows.reduce((s, r) => s + Number(r.amount), 0);
   console.log(`Inserted ${rows.length} sample donations (${donors.length} distinct donors), total Rs ${total.toLocaleString("en-IN")}.`);
+  await close();
   console.log(`Remove later with: npm run db:sample -- --remove`);
 }
 main().catch((e) => {

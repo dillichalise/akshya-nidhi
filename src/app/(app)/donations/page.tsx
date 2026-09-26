@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { deleteDonationAction } from "@/actions/donations";
+import { DonationFilters } from "@/components/donation-filters";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { Pagination } from "@/components/pagination";
-import { btnGhost, btnPrimary, Card, inputCls, PageTitle } from "@/components/ui";
+import { btnGhost, btnPrimary, Card, PageTitle } from "@/components/ui";
 import { listDonations } from "@/db/queries/donations";
 import { can } from "@/lib/auth/permissions";
 import { requirePermission } from "@/lib/auth/session";
@@ -57,21 +58,7 @@ export default async function DonationsPage({
       </PageTitle>
 
       <Card className="mb-4">
-        <form className="grid gap-3 sm:grid-cols-[1fr_auto_auto_auto_auto] sm:items-end">
-          <input name="q" defaultValue={q} placeholder={t("searchPlaceholder")} className={inputCls} />
-          <label className="text-sm text-stone-600">
-            {tc("from")}
-            <input type="date" name="from" defaultValue={from} className={inputCls} />
-          </label>
-          <label className="text-sm text-stone-600">
-            {tc("to")}
-            <input type="date" name="to" defaultValue={to} className={inputCls} />
-          </label>
-          <button className={btnPrimary}>{tc("filter")}</button>
-          <Link href="/donations" className={btnGhost}>
-            {tc("clear")}
-          </Link>
-        </form>
+        <DonationFilters key={`${q ?? ""}|${from ?? ""}|${to ?? ""}`} q={q ?? ""} from={from ?? ""} to={to ?? ""} />
       </Card>
 
       <p className="mb-2 text-sm text-stone-600">{tc("records", { count: total })}</p>
