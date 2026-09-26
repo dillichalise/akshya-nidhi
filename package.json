@@ -11,7 +11,8 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
-    "db:seed": "tsx scripts/seed-super-admin.ts"
+    "db:seed": "tsx scripts/seed-super-admin.ts",
+    "db:sample": "tsx scripts/sample-donations.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
