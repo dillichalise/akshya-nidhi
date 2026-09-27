@@ -41,7 +41,8 @@ design anything that blocks it (e.g. keep `donations.id` stable, allow a future
 
 - **Currency:** NPR only. Store money as `numeric(12,2)`. Never use JS floats for sums —
   do sums in SQL, or use integer paisa / a decimal lib for any client-side math.
-  Display with lakh/crore grouping (`Rs 1,25,000.00`, `en-IN` style), in both languages.
+  Display with lakh/crore grouping (`Rs 1,25,000.00` en / `Rs १,२५,०००.००` ne), same
+  grouping in both languages, digits per the Nepali numerals rule below.
 - **Time zone:** `Asia/Kathmandu` (UTC+5:45). "Today" for the dashboard is computed in
   this zone. `donation_date` is a plain `date` (AD), separate from `created_at`.
 - **Calendar:** storage and domain logic stay AD-only — `donation_date` and every other
@@ -58,9 +59,25 @@ design anything that blocks it (e.g. keep `donations.id` stable, allow a future
   stay identical (single source of truth, per the `reports-export` skill). Filenames
   (`donations_YYYY-MM-DD.pdf`, `receipt_YYYY-MM-DD_...`) are left AD — they're stable
   identifiers, not UI copy.
-- **Nepali numerals:** UI text is translated; numbers stay Western digits unless a
-  later decision changes this. This applies to BS dates too — day/year digits are always
-  Western, only the month/weekday name is Devanagari in the `ne` locale.
+- **Nepali numerals:** every numeric *value* shown in the `ne` UI renders in Devanagari
+  digits (०-९) — currency amounts, BS day/year, counts, pagination, serial numbers. This
+  reverses the earlier "numbers stay Western digits" decision (owner-approved 2026-09-27,
+  the day after the BS-calendar reversal above). The conversion happens in exactly one
+  place, `toNepaliDigits`/`localizedCount` in `src/lib/format.ts` (digit-glyph rewrite
+  only — grouping, decimal points, month/weekday names untouched, and a no-op for `en`) —
+  every formatter (`formatNPR`, `formatDate`, `formatDateTime`) and every raw number
+  rendered directly in JSX or a PDF/Excel builder goes through it. Two things stay Western
+  by design, as **identifiers rather than quantities**: donor **phone numbers**, and the
+  receipt reference code (`receiptNumber` in `src/lib/receipts/shared.ts` — it's hex, not
+  decimal, so Devanagari digits don't even cover it). The Excel report's **amount** column
+  also stays a native numeric cell (Western digits) so its `SUM` formula and lakh/crore
+  `numFmt` keep working — Excel has no Devanagari number format; everything else in that
+  export (S.N., dates, record count) is Devanagari text for `ne`. Filenames are unaffected
+  (already AD/Western per the Calendar rule). ICU-plural messages (`common.records`,
+  `dashboard.donations`) need their `count` passed through `localizedCount`, not the raw
+  number, because their Nepali translations dropped the `plural`/`#` syntax (Nepali doesn't
+  need plural agreement) and so never got ICU's automatic per-locale number formatting —
+  see the comment on `localizedCount` before changing either message.
 
 ## Roles & Permissions (source of truth)
 

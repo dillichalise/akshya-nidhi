@@ -3,7 +3,7 @@ import { TopDonorsTable } from "@/components/top-donors-table";
 import { Card, PageTitle } from "@/components/ui";
 import { getTopDonors, getTotals } from "@/db/queries/reports";
 import { requirePermission } from "@/lib/auth/session";
-import { formatDate, formatNPR } from "@/lib/format";
+import { formatDate, formatNPR, localizedCount } from "@/lib/format";
 
 // Always fresh: totals must reflect the latest donations.
 export const dynamic = "force-dynamic";
@@ -25,13 +25,13 @@ export default async function DashboardPage() {
           <div className="text-sm text-stone-600">
             {t("totalToday")} · {formatDate(totals.todayDate, locale)}
           </div>
-          <div className="mt-1 text-3xl font-semibold tabular-nums text-amber-800">{formatNPR(totals.today.total)}</div>
-          <div className="mt-1 text-sm text-stone-500">{t("donations", { count: totals.today.count })}</div>
+          <div className="mt-1 text-3xl font-semibold tabular-nums text-amber-800">{formatNPR(totals.today.total, locale)}</div>
+          <div className="mt-1 text-sm text-stone-500">{t("donations", { count: localizedCount(totals.today.count, locale) })}</div>
         </Card>
         <Card>
           <div className="text-sm text-stone-600">{t("totalOverall")}</div>
-          <div className="mt-1 text-3xl font-semibold tabular-nums text-amber-800">{formatNPR(totals.overall.total)}</div>
-          <div className="mt-1 text-sm text-stone-500">{t("donations", { count: totals.overall.count })}</div>
+          <div className="mt-1 text-3xl font-semibold tabular-nums text-amber-800">{formatNPR(totals.overall.total, locale)}</div>
+          <div className="mt-1 text-sm text-stone-500">{t("donations", { count: localizedCount(totals.overall.count, locale) })}</div>
         </Card>
       </div>
       <TopDonorsTable title={t("topToday")} donors={topToday} />

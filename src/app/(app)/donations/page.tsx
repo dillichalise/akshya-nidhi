@@ -8,7 +8,7 @@ import { btnGhost, btnPrimary, Card, PageTitle } from "@/components/ui";
 import { listDonations } from "@/db/queries/donations";
 import { can } from "@/lib/auth/permissions";
 import { requirePermission } from "@/lib/auth/session";
-import { formatDate, formatNPR } from "@/lib/format";
+import { formatDate, formatNPR, localizedCount } from "@/lib/format";
 
 const PAGE_SIZE = 20;
 const ymd = /^\d{4}-\d{2}-\d{2}$/;
@@ -63,7 +63,7 @@ export default async function DonationsPage({
         <DonationFilters key={`${q ?? ""}|${from ?? ""}|${to ?? ""}`} q={q ?? ""} from={from ?? ""} to={to ?? ""} />
       </Card>
 
-      <p className="mb-2 text-sm text-stone-600">{tc("records", { count: total })}</p>
+      <p className="mb-2 text-sm text-stone-600">{tc("records", { count: localizedCount(total, locale) })}</p>
 
       {rows.length === 0 ? (
         <Card>
@@ -93,7 +93,7 @@ export default async function DonationsPage({
                     <td className="px-3 py-2 font-medium">{r.donorName}</td>
                     <td className="whitespace-nowrap px-3 py-2">{r.phone}</td>
                     <td className="px-3 py-2">{r.address}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatNPR(r.amount)}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatNPR(r.amount, locale)}</td>
                     <td className="max-w-48 px-3 py-2 text-stone-600">{r.remarks}</td>
                     <td className="px-3 py-2 text-stone-600">{r.createdByName}</td>
                     {(canEdit || canDelete || canReceipt) && (
@@ -138,7 +138,7 @@ export default async function DonationsPage({
                       {r.phone} · {r.address}
                     </div>
                   </div>
-                  <div className="text-right font-semibold tabular-nums">{formatNPR(r.amount)}</div>
+                  <div className="text-right font-semibold tabular-nums">{formatNPR(r.amount, locale)}</div>
                 </div>
                 <div className="mt-1 text-sm text-stone-500">
                   {formatDate(r.donationDate, locale)} · {r.createdByName}

@@ -75,7 +75,9 @@ function ReceiptDocument({ data, labels, locale }: { data: ReceiptRow; labels: R
             <Text style={s.metaLine}>
               <T>{labels.receiptNo}</T>
             </Text>
-            <Text style={s.metaLine}>{formatDate(data.donationDate, locale)}</Text>
+            <Text style={s.metaLine}>
+              <T>{formatDate(data.donationDate, locale)}</T>
+            </Text>
           </View>
         </View>
 
@@ -94,7 +96,9 @@ function ReceiptDocument({ data, labels, locale }: { data: ReceiptRow; labels: R
           <Text style={s.amountLabel}>
             <T>{labels.amount}</T>
           </Text>
-          <Text style={s.amountValue}>{formatNPR(data.amount)}</Text>
+          <Text style={s.amountValue}>
+            <T>{formatNPR(data.amount, locale)}</T>
+          </Text>
         </View>
 
         <Text style={s.thanks}>

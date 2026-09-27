@@ -1,6 +1,6 @@
 import "server-only";
 import ExcelJS from "exceljs";
-import { formatDate } from "@/lib/format";
+import { formatDate, toNepaliDigits } from "@/lib/format";
 import type { ReportData, ReportLabels } from "./shared";
 
 // Lakh/crore digit grouping (Nepal/India style) for the amount cells.
@@ -29,11 +29,13 @@ export async function buildExcel(data: ReportData, labels: ReportLabels, locale:
 
   data.rows.forEach((r, i) => {
     const row = ws.addRow([
-      i + 1,
+      toNepaliDigits(i + 1, locale),
       formatDate(r.donationDate, locale),
       r.donorName,
       r.phone,
       r.address,
+      // Amount stays a native numeric cell (Western digits) regardless of locale: Excel's
+      // grouping/SUM formula below need a real number, and it has no Devanagari digit format.
       Number(r.amount),
       r.remarks ?? "",
     ]);
@@ -47,7 +49,7 @@ export async function buildExcel(data: ReportData, labels: ReportLabels, locale:
   total.font = { bold: true };
   total.getCell(6).numFmt = NPR_FORMAT;
   total.eachCell((c) => (c.border = { top: { style: "thin" } }));
-  ws.addRow(["", "", "", "", labels.records, data.count]).font = { color: { argb: "FF6B7280" } };
+  ws.addRow(["", "", "", "", labels.records, toNepaliDigits(data.count, locale)]).font = { color: { argb: "FF6B7280" } };
 
   [6, 16, 28, 16, 36, 18, 36].forEach((w, i) => (ws.getColumn(i + 1).width = w));
 

@@ -25,11 +25,14 @@ count + the selected date/range + generation timestamp + generated-by username.
 - PDF: `@react-pdf/renderer`, server-side. Register **Noto Sans Devanagari** (bundle the
   .ttf in the repo) so Nepali renders. Paginate long tables with repeated header row and a
   total on the last page. Landscape if columns are cramped. No Puppeteer.
-- Excel: ExcelJS. Amount column is a numeric cell with format `#,##0.00`. The date column
-  is a formatted **text** cell (`formatDate(donationDate, locale)`, Bikram Sambat — e.g.
-  "11 Aswin 2083") rather than a native Excel date cell: Excel's own date type only knows
-  the Gregorian calendar, so it can't represent a BS date natively. Frozen header row, auto
-  column widths, a `SUM` total row.
+- Excel: ExcelJS. Amount column is a numeric cell with format `#,##0.00` — this one
+  deliberately stays Western-digit even for `ne` (the `SUM` formula and that `numFmt` both
+  need a real number; Excel can't format a cell in Devanagari digits). Every other column
+  is text, `ne`-localized including digits: the date column (`formatDate(donationDate,
+  locale)`, Bikram Sambat, e.g. "11 Aswin 2083") rather than a native Excel date cell,
+  since Excel's own date type only knows Gregorian; the S.N. column and the trailing
+  record-count cell go through `toNepaliDigits`. Frozen header row, auto column widths, a
+  `SUM` total row.
 - File names: `donations_YYYY-MM-DD.(pdf|xlsx)` or `donations_FROM_to_TO.(pdf|xlsx)`.
 - Localize headers/labels by the current locale cookie. Set `Content-Disposition:
   attachment` and correct MIME types.
@@ -42,7 +45,8 @@ count + the selected date/range + generation timestamp + generated-by username.
 3. Top 10 donors today: name, phone, address, amount.
 4. Top 10 donors overall: name, phone, address, amount.
 Aggregate in SQL; tie-break total DESC then name ASC; show an empty state when no data.
-Amounts via `formatNPR`.
+Amounts via `formatNPR(amount, locale)` — pass the locale, it's what makes the Devanagari
+digits show up for `ne` (see `i18n-next-intl` skill's numerals rule).
 
 ## Tests
 Sum equals sum of rows; PDF/Excel totals equal the on-screen total; inclusive boundaries;

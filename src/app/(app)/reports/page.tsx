@@ -3,7 +3,7 @@ import { getReport } from "@/db/queries/reports";
 import { BsDatePicker } from "@/components/bs-date-picker";
 import { Alert, btnGhost, btnPrimary, Card, PageTitle } from "@/components/ui";
 import { requirePermission } from "@/lib/auth/session";
-import { formatDate, formatNPR, todayInNepal } from "@/lib/format";
+import { formatDate, formatNPR, localizedCount, todayInNepal, toNepaliDigits } from "@/lib/format";
 import { MAX_RANGE_DAYS, periodText, rangeDays } from "@/lib/reports/shared";
 import { dateRangeSchema } from "@/lib/validation/donation";
 
@@ -57,7 +57,7 @@ export default async function ReportsPage({
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold">{t("summary", { period: periodText(from, to, locale) })}</h2>
-              <p className="text-sm text-stone-500">{tc("records", { count: report.count })}</p>
+              <p className="text-sm text-stone-500">{tc("records", { count: localizedCount(report.count, locale) })}</p>
             </div>
             {report.count > 0 && (
               <div className="flex gap-2">
@@ -92,12 +92,12 @@ export default async function ReportsPage({
                 <tbody className="divide-y divide-stone-100">
                   {report.rows.map((r, i) => (
                     <tr key={r.id} className="align-top">
-                      <td className="px-3 py-2 text-stone-400">{i + 1}</td>
+                      <td className="px-3 py-2 text-stone-400">{toNepaliDigits(i + 1, locale)}</td>
                       <td className="whitespace-nowrap px-3 py-2">{formatDate(r.donationDate, locale)}</td>
                       <td className="px-3 py-2 font-medium">{r.donorName}</td>
                       <td className="whitespace-nowrap px-3 py-2">{r.phone}</td>
                       <td className="px-3 py-2">{r.address}</td>
-                      <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatNPR(r.amount)}</td>
+                      <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatNPR(r.amount, locale)}</td>
                       <td className="px-3 py-2 text-stone-600">{r.remarks}</td>
                     </tr>
                   ))}
@@ -107,7 +107,7 @@ export default async function ReportsPage({
                     <td colSpan={5} className="px-3 py-2 text-right">
                       {t("grandTotal")}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatNPR(report.total)}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatNPR(report.total, locale)}</td>
                     <td />
                   </tr>
                 </tfoot>

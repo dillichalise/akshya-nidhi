@@ -1,6 +1,6 @@
 import "server-only";
 import { Document, Page, renderToBuffer, StyleSheet, Text, View } from "@react-pdf/renderer";
-import { formatDate, formatNPR } from "@/lib/format";
+import { formatDate, formatNPR, toNepaliDigits } from "@/lib/format";
 import { MixedText as T, registerPdfFonts } from "@/lib/pdf/shared";
 import type { ReportData, ReportLabels } from "./shared";
 
@@ -55,12 +55,12 @@ function ReportDocument({ data, labels, locale }: { data: ReportData; labels: Re
           </View>
           {data.rows.map((r, i) => (
             <View key={r.id} style={s.row} wrap={false}>
-              <Cell w={W.sn}>{String(i + 1)}</Cell>
+              <Cell w={W.sn}>{toNepaliDigits(i + 1, locale)}</Cell>
               <Cell w={W.date}>{formatDate(r.donationDate, locale)}</Cell>
               <Cell w={W.name}>{r.donorName}</Cell>
               <Cell w={W.phone}>{r.phone}</Cell>
               <Cell w={W.address}>{r.address}</Cell>
-              <Cell w={W.amount} right>{formatNPR(r.amount)}</Cell>
+              <Cell w={W.amount} right>{formatNPR(r.amount, locale)}</Cell>
               <Cell w={W.remarks}>{r.remarks ?? ""}</Cell>
             </View>
           ))}
@@ -68,7 +68,7 @@ function ReportDocument({ data, labels, locale }: { data: ReportData; labels: Re
             <Cell w={W.sn + W.date + W.name + W.phone + W.address} right bold>
               {`${labels.grandTotal} (${labels.records})`}
             </Cell>
-            <Cell w={W.amount} right bold>{formatNPR(data.total)}</Cell>
+            <Cell w={W.amount} right bold>{formatNPR(data.total, locale)}</Cell>
           </View>
         </View>
 

@@ -1,6 +1,6 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import type { TopDonor } from "@/db/queries/reports";
-import { formatDate, formatNPR } from "@/lib/format";
+import { formatDate, formatNPR, toNepaliDigits } from "@/lib/format";
 import { Card } from "./ui";
 
 /**
@@ -29,7 +29,7 @@ export async function TopDonorsTable({ title, donors }: { title: string; donors:
             <tbody className="divide-y divide-stone-100">
               {donors.map((d, i) => (
                 <tr key={`${d.phone}-${d.name}-${i}`} className="align-top">
-                  <td className="px-3 py-2 text-stone-400">{i + 1}</td>
+                  <td className="px-3 py-2 text-stone-400">{toNepaliDigits(i + 1, locale)}</td>
                   <td className="px-3 py-2 font-medium">
                     <span className="inline-flex flex-wrap items-center gap-2">
                       {d.name}
@@ -38,22 +38,26 @@ export async function TopDonorsTable({ title, donors }: { title: string; donors:
                           <button
                             type="button"
                             className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-600"
-                            aria-label={t("multiple", { count: d.count })}
+                            aria-label={t("multiple", { count: toNepaliDigits(d.count, locale) })}
                           >
-                            ×{d.count}
+                            ×{toNepaliDigits(d.count, locale)}
                           </button>
                           <span
                             role="tooltip"
                             className="invisible absolute left-0 top-full z-10 mt-1 w-64 rounded-lg border border-stone-200 bg-white p-3 text-xs font-normal shadow-lg group-focus-within:visible group-hover:visible"
                           >
-                            <span className="mb-1 block font-semibold">{t("multiple", { count: d.count })}</span>
+                            <span className="mb-1 block font-semibold">
+                              {t("multiple", { count: toNepaliDigits(d.count, locale) })}
+                            </span>
                             {d.items.slice(0, 10).map((it, j) => (
                               <span key={j} className="flex justify-between gap-3 py-0.5 tabular-nums">
                                 <span>{formatDate(it.date, locale)}</span>
-                                <span>{formatNPR(it.amount)}</span>
+                                <span>{formatNPR(it.amount, locale)}</span>
                               </span>
                             ))}
-                            {d.items.length > 10 && <span className="block pt-1 text-stone-500">+{d.items.length - 10}</span>}
+                            {d.items.length > 10 && (
+                              <span className="block pt-1 text-stone-500">+{toNepaliDigits(d.items.length - 10, locale)}</span>
+                            )}
                           </span>
                         </span>
                       )}
@@ -61,7 +65,7 @@ export async function TopDonorsTable({ title, donors }: { title: string; donors:
                   </td>
                   <td className="whitespace-nowrap px-3 py-2">{d.phone}</td>
                   <td className="px-3 py-2">{d.address}</td>
-                  <td className="whitespace-nowrap px-3 py-2 text-right font-semibold tabular-nums">{formatNPR(d.total)}</td>
+                  <td className="whitespace-nowrap px-3 py-2 text-right font-semibold tabular-nums">{formatNPR(d.total, locale)}</td>
                 </tr>
               ))}
             </tbody>

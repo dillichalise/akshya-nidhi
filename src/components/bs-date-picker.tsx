@@ -11,7 +11,7 @@ import {
   todayBs,
   weekdayShortLabels,
 } from "@/lib/bs-date";
-import { formatDate, todayInNepal } from "@/lib/format";
+import { formatDate, todayInNepal, toNepaliDigits } from "@/lib/format";
 import { inputCls } from "./ui";
 
 /**
@@ -130,7 +130,7 @@ export function BsDatePicker({
               <ChevronLeft size={18} />
             </button>
             <span className="text-sm font-medium text-stone-800">
-              {bsMonthName(view.year, view.month, locale)} {view.year}
+              {bsMonthName(view.year, view.month, locale)} {toNepaliDigits(view.year, locale)}
             </span>
             <button
               type="button"
@@ -172,7 +172,7 @@ export function BsDatePicker({
                           : "text-stone-800 hover:bg-amber-50")
                   }
                 >
-                  {i + 1}
+                  {toNepaliDigits(i + 1, locale)}
                 </button>
               );
             })}

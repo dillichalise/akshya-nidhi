@@ -1,6 +1,6 @@
 import "server-only";
 import { getLocale, getTranslations } from "next-intl/server";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, localizedCount } from "@/lib/format";
 import { periodText, type ReportLabels } from "./shared";
 
 /** Report labels in the current locale (from the locale cookie). */
@@ -17,7 +17,7 @@ export async function getReportLabels(opts: { from: string; to: string; generate
     generatedOn: t("generatedOn", { when: formatDateTime(new Date(), locale) }),
     generatedBy: t("generatedBy", { name: opts.generatedBy }),
     grandTotal: t("grandTotal"),
-    records: tc("records", { count: opts.count }),
+    records: tc("records", { count: localizedCount(opts.count, locale) }),
     sn: t("sn"),
     date: td("date"),
     name: td("name"),
