@@ -71,8 +71,6 @@ const s = StyleSheet.create({
     color: "#57534e",
     textAlign: "center",
   },
-  signOff: { marginTop: 40, flexDirection: "row", justifyContent: "flex-end" },
-  signOffText: { fontSize: 9, color: "#57534e", textAlign: "right" },
   footer: {
     position: "absolute",
     bottom: 24,
@@ -162,19 +160,10 @@ function ReceiptDocument({
           <T>{labels.thanks}</T>
         </Text>
 
-        <View style={s.signOff}>
-          <View>
-            <Text style={s.signOffText}>
-              <T>{labels.issuedBy}</T>
-            </Text>
-            <Text style={s.signOffText}>
-              <T>{labels.generatedOn}</T>
-            </Text>
-          </View>
-        </View>
-
         <Text style={s.footer}>
           <T>{labels.footerNote}</T>
+          {"\n"}
+          <T>{labels.generatedOn}</T>
         </Text>
       </Page>
     </Document>
