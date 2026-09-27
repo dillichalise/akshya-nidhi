@@ -44,7 +44,7 @@ export function formatNPR(
     maximumFractionDigits: 2,
     numberingSystem: "latn",
   } as Intl.NumberFormatOptions).format(n);
-  const prefix = locale === "ne" ? "रु " : "Rs ";
+  const prefix = locale === "ne" ? "रु. " : "Rs. ";
   return prefix + toNepaliDigits(grouped, locale);
 }
 

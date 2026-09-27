@@ -245,7 +245,7 @@ export function DonationForm({
             >
               {/* Currency badge */}
               <span className="flex items-center border-r border-stone-300 bg-stone-50 px-3 text-sm font-semibold text-stone-600 select-none">
-                {locale === "ne" ? "रु" : "Rs"}
+                {locale === "ne" ? "रु." : "Rs."}
               </span>
 
               {/* Amount input — shows comma-grouped value, no border/ring (handled by wrapper) */}
