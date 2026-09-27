@@ -4,7 +4,9 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { type FormState } from "@/actions/types";
 import { amountInWords, formatNPR } from "@/lib/format";
+import { receiptFileName } from "@/lib/receipts/shared";
 import { BsDatePicker } from "./bs-date-picker";
+import { ReceiptPreviewModal } from "./receipt-preview-button";
 import { Alert, btnGhost, btnPrimary, Field, inputCls } from "./ui";
 
 type Action = (prev: FormState, formData: FormData) => Promise<FormState>;
@@ -34,13 +36,29 @@ export function DonationForm({
   // Live amount preview — initialise from existing value when editing.
   const [rawAmount, setRawAmount] = useState(v.amount ?? "");
 
-  // After a successful add, clear the preview and focus the first field.
+  // Receipt modal state — only relevant on the "add" form (not edit).
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  // Track the last saved receiptId so closing and re-opening modal still works.
+  const [savedReceiptId, setSavedReceiptId] = useState<string | null>(null);
+  const [savedDate, setSavedDate] = useState<string>("");
+
+  // After a successful save, open the receipt modal and clear the amount preview.
   useEffect(() => {
-    if (state.status === "success") {
+    if (state.status === "success" && v.receiptId) {
+      setSavedReceiptId(v.receiptId);
+      setSavedDate(v.donationDate ?? "");
+      setReceiptOpen(true);
       setRawAmount("");
-      nameRef.current?.focus();
+      // Focus will move to the name field once the modal is closed
     }
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.status, v._ts]); // _ts changes on each success, re-running even if receiptId stays same
+
+  // When the modal closes, focus the first field so the next entry is quick.
+  const handleModalClose = () => {
+    setReceiptOpen(false);
+    nameRef.current?.focus();
+  };
 
   // Derive formatted preview values from rawAmount.
   const amountNum = Number(rawAmount);
@@ -56,142 +74,173 @@ export function DonationForm({
   // A fresh key after each success (set by the server action) remounts the form with empty fields.
   const formKey = state.values._ts ?? "form";
 
+  const receiptUrl = savedReceiptId
+    ? `/api/donations/${savedReceiptId}/receipt`
+    : null;
+  const downloadName = savedReceiptId
+    ? `${receiptFileName({ id: savedReceiptId, donationDate: savedDate })}.pdf`
+    : "";
+
   return (
-    <form
-      key={formKey}
-      ref={formRef}
-      action={formAction}
-      className="space-y-4"
-      noValidate
-    >
-      {donationId && <input type="hidden" name="id" value={donationId} />}
-      {state.status === "success" && state.message && (
-        <Alert kind="success">
-          {t(state.message)}
-          {v.receiptId && (
-            <>
-              {" "}
-              <a
-                href={`/api/donations/${v.receiptId}/receipt`}
-                className="font-medium underline"
+    <>
+      {/* Receipt preview modal — auto-opens after a successful add */}
+      {receiptUrl && (
+        <ReceiptPreviewModal
+          open={receiptOpen}
+          onClose={handleModalClose}
+          receiptUrl={receiptUrl}
+          fileName={downloadName}
+          extraActions={
+            <button
+              type="button"
+              onClick={handleModalClose}
+              className={btnPrimary}
+            >
+              {/* Plus icon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="mr-1.5 h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
               >
-                {t("receipt.download")}
-              </a>
-            </>
-          )}
-        </Alert>
-      )}
-      {state.status === "error" && state.message && (
-        <Alert kind="error">{t(state.message)}</Alert>
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              {t("donation.addAnother")}
+            </button>
+          }
+        />
       )}
 
-      <Field
-        label={t("donation.name")}
-        name="donorName"
-        error={err("donorName")}
+      <form
+        key={formKey}
+        ref={formRef}
+        action={formAction}
+        className="space-y-4"
+        noValidate
       >
-        <input
-          ref={nameRef}
-          id="donorName"
+        {donationId && <input type="hidden" name="id" value={donationId} />}
+        {state.status === "error" && state.message && (
+          <Alert kind="error">{t(state.message)}</Alert>
+        )}
+
+        <Field
+          label={t("donation.name")}
           name="donorName"
-          defaultValue={v.donorName}
-          autoComplete="off"
-          aria-invalid={!!state.errors.donorName}
-          aria-describedby="donorName-error"
-          className={inputCls}
-        />
-      </Field>
-      <Field
-        label={t("donation.address")}
-        name="address"
-        error={err("address")}
-      >
-        <input
-          id="address"
-          name="address"
-          defaultValue={v.address}
-          autoComplete="off"
-          aria-invalid={!!state.errors.address}
-          aria-describedby="address-error"
-          className={inputCls}
-        />
-      </Field>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t("donation.phone")} name="phone" error={err("phone")}>
+          error={err("donorName")}
+        >
           <input
-            id="phone"
-            name="phone"
-            type="tel"
-            inputMode="tel"
-            defaultValue={v.phone}
+            ref={nameRef}
+            id="donorName"
+            name="donorName"
+            defaultValue={v.donorName}
             autoComplete="off"
-            aria-invalid={!!state.errors.phone}
-            aria-describedby="phone-error"
+            aria-invalid={!!state.errors.donorName}
+            aria-describedby="donorName-error"
             className={inputCls}
           />
         </Field>
-        <Field label={t("donation.amount")} name="amount" error={err("amount")}>
+        <Field
+          label={t("donation.address")}
+          name="address"
+          error={err("address")}
+        >
           <input
-            id="amount"
-            name="amount"
-            inputMode="decimal"
-            defaultValue={v.amount}
+            id="address"
+            name="address"
+            defaultValue={v.address}
             autoComplete="off"
-            aria-invalid={!!state.errors.amount}
-            aria-describedby="amount-error"
-            className={inputCls + " tabular-nums"}
-            onChange={(e) => setRawAmount(e.target.value)}
+            aria-invalid={!!state.errors.address}
+            aria-describedby="address-error"
+            className={inputCls}
           />
-          {formattedAmount && (
-            <p className="mt-1 text-sm font-medium tabular-nums text-stone-700">
-              {formattedAmount}
-            </p>
-          )}
-          {wordsAmount && (
-            <p className="mt-0.5 text-xs italic text-stone-500">
-              {wordsAmount}
-            </p>
-          )}
         </Field>
-      </div>
-      <Field
-        label={t("donation.date")}
-        name="donationDate"
-        error={err("donationDate")}
-      >
-        <BsDatePicker
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label={t("donation.phone")} name="phone" error={err("phone")}>
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              defaultValue={v.phone}
+              autoComplete="off"
+              aria-invalid={!!state.errors.phone}
+              aria-describedby="phone-error"
+              className={inputCls}
+            />
+          </Field>
+          <Field
+            label={t("donation.amount")}
+            name="amount"
+            error={err("amount")}
+          >
+            <input
+              id="amount"
+              name="amount"
+              inputMode="decimal"
+              defaultValue={v.amount}
+              autoComplete="off"
+              aria-invalid={!!state.errors.amount}
+              aria-describedby="amount-error"
+              className={inputCls + " tabular-nums"}
+              onChange={(e) => setRawAmount(e.target.value)}
+            />
+            {formattedAmount && (
+              <p className="mt-1 text-sm font-medium tabular-nums text-stone-700">
+                {formattedAmount}
+              </p>
+            )}
+            {wordsAmount && (
+              <p className="mt-0.5 text-xs italic text-stone-500">
+                {wordsAmount}
+              </p>
+            )}
+          </Field>
+        </div>
+        <Field
+          label={t("donation.date")}
           name="donationDate"
-          max={today}
-          defaultValue={v.donationDate ?? today}
-          aria-invalid={!!state.errors.donationDate}
-          aria-describedby="donationDate-error"
-        />
-      </Field>
-      <Field
-        label={`${t("donation.remarks")} (${t("common.optional")})`}
-        name="remarks"
-        error={err("remarks")}
-      >
-        <textarea
-          id="remarks"
+          error={err("donationDate")}
+        >
+          <BsDatePicker
+            name="donationDate"
+            max={today}
+            defaultValue={v.donationDate ?? today}
+            aria-invalid={!!state.errors.donationDate}
+            aria-describedby="donationDate-error"
+          />
+        </Field>
+        <Field
+          label={`${t("donation.remarks")} (${t("common.optional")})`}
           name="remarks"
-          rows={3}
-          defaultValue={v.remarks}
-          aria-invalid={!!state.errors.remarks}
-          aria-describedby="remarks-error"
-          className={inputCls}
-        />
-      </Field>
-      <div className="flex flex-wrap gap-3 pt-2">
-        <button className={btnPrimary} disabled={pending}>
-          {pending ? t("common.saving") : t("common.save")}
-        </button>
-        {cancelHref && (
-          <Link href={cancelHref} className={btnGhost}>
-            {t("common.cancel")}
-          </Link>
-        )}
-      </div>
-    </form>
+          error={err("remarks")}
+        >
+          <textarea
+            id="remarks"
+            name="remarks"
+            rows={3}
+            defaultValue={v.remarks}
+            aria-invalid={!!state.errors.remarks}
+            aria-describedby="remarks-error"
+            className={inputCls}
+          />
+        </Field>
+        <div className="flex flex-wrap gap-3 pt-2">
+          <button className={btnPrimary} disabled={pending}>
+            {pending ? t("common.saving") : t("common.save")}
+          </button>
+          {cancelHref && (
+            <Link href={cancelHref} className={btnGhost}>
+              {t("common.cancel")}
+            </Link>
+          )}
+        </div>
+      </form>
+    </>
   );
 }
