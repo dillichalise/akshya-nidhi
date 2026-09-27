@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
-import { btnGhost, btnPrimary, Card, PageTitle } from "@/components/ui";
+import { btnPrimary, Card, PageTitle } from "@/components/ui";
 import { listUsers } from "@/db/queries/users";
 import { can } from "@/lib/auth/permissions";
 import { requirePermission } from "@/lib/auth/session";
@@ -73,9 +73,31 @@ export default async function UsersPage() {
                   <td className="px-3 py-2">
                     <Link
                       href={`/users/${u.id}`}
-                      className={btnGhost + " !min-h-9 !px-3 !py-1 text-sm"}
+                      title={tc("edit")}
+                      aria-label={tc("edit")}
+                      className="group relative inline-flex h-8 w-8 items-center justify-center rounded-lg border border-stone-300 bg-white text-stone-600 hover:bg-stone-50 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-600/30"
                     >
-                      {tc("edit")}
+                      {/* Pencil icon */}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                      <span
+                        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-stone-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+                        role="tooltip"
+                      >
+                        {tc("edit")}
+                      </span>
                     </Link>
                   </td>
                 )}

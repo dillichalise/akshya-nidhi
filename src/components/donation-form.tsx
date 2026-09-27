@@ -146,9 +146,19 @@ export function DonationForm({
             name="donorName"
             defaultValue={v.donorName}
             autoComplete="off"
+            maxLength={50}
             aria-invalid={!!state.errors.donorName}
             aria-describedby="donorName-error"
             className={inputCls}
+            onKeyDown={(e) => {
+              // Block digits and most symbols — allow letters, spaces, hyphens, apostrophes, and control keys
+              const allowed =
+                e.key.length > 1 || // control keys (Backspace, ArrowLeft, etc.)
+                e.ctrlKey ||
+                e.metaKey ||
+                /^[\p{L}\p{M}'\- ]$/u.test(e.key);
+              if (!allowed) e.preventDefault();
+            }}
           />
         </Field>
         <Field
@@ -161,24 +171,61 @@ export function DonationForm({
             name="address"
             defaultValue={v.address}
             autoComplete="off"
+            maxLength={100}
             aria-invalid={!!state.errors.address}
             aria-describedby="address-error"
             className={inputCls}
+            onKeyDown={(e) => {
+              // Allow letters, digits, spaces, , . - : and control keys
+              const allowed =
+                e.key.length > 1 ||
+                e.ctrlKey ||
+                e.metaKey ||
+                /^[\p{L}\p{M}\d\s,.\-:]$/u.test(e.key);
+              if (!allowed) e.preventDefault();
+            }}
           />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={t("donation.phone")} name="phone" error={err("phone")}>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              inputMode="tel"
-              defaultValue={v.phone}
-              autoComplete="off"
-              aria-invalid={!!state.errors.phone}
-              aria-describedby="phone-error"
-              className={inputCls}
-            />
+            {/* Nepal flag + country code block */}
+            <div
+              className={
+                "flex overflow-hidden rounded-lg border border-stone-300 bg-white " +
+                "focus-within:border-amber-600 focus-within:ring-2 focus-within:ring-amber-600/30 " +
+                (state.errors.phone ? "border-red-500" : "")
+              }
+            >
+              <span className="flex items-center gap-1.5 border-r border-stone-300 bg-stone-50 px-3 text-sm font-semibold text-stone-600 select-none whitespace-nowrap">
+                {/* Nepal flag emoji */}
+                🇳🇵 +977
+              </span>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                inputMode="numeric"
+                maxLength={10}
+                defaultValue={v.phone}
+                autoComplete="off"
+                aria-invalid={!!state.errors.phone}
+                aria-describedby="phone-error"
+                placeholder="98XXXXXXXX"
+                className={
+                  "block w-full min-h-11 bg-transparent px-3 py-2 text-base " +
+                  "text-stone-900 tabular-nums placeholder:text-stone-400 " +
+                  "focus:outline-none"
+                }
+                onKeyDown={(e) => {
+                  const allowed =
+                    e.key.length > 1 ||
+                    e.ctrlKey ||
+                    e.metaKey ||
+                    /^\d$/.test(e.key);
+                  if (!allowed) e.preventDefault();
+                }}
+              />
+            </div>
           </Field>
           <Field
             label={t("donation.amount")}
@@ -219,6 +266,19 @@ export function DonationForm({
                   const raw = e.target.value.replace(/,/g, "");
                   setRawAmount(raw);
                   setDispAmount(formatAmountInput(raw));
+                }}
+                onKeyDown={(e) => {
+                  // Allow digits, a single decimal point, and control keys
+                  if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+                    if (!/[\d.]/.test(e.key)) {
+                      e.preventDefault();
+                      return;
+                    }
+                    // Block a second decimal point
+                    if (e.key === "." && rawAmount.includes(".")) {
+                      e.preventDefault();
+                    }
+                  }
                 }}
               />
             </div>
