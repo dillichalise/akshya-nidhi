@@ -22,7 +22,15 @@ function buildUrl(q: string, from: string, to: string) {
  * last keystroke; Enter or the Filter button applies immediately (plain GET form).
  * The page remounts this component (via `key`) whenever the applied filters change.
  */
-export function DonationFilters({ q, from, to }: { q: string; from: string; to: string }) {
+export function DonationFilters({
+  q,
+  from,
+  to,
+}: {
+  q: string;
+  from: string;
+  to: string;
+}) {
   const t = useTranslations();
   const router = useRouter();
   const [query, setQuery] = useState(q);
@@ -31,12 +39,16 @@ export function DonationFilters({ q, from, to }: { q: string; from: string; to: 
 
   useEffect(() => {
     if (query.trim() === q) return; // nothing new to apply
-    const id = setTimeout(() => router.replace(buildUrl(query, dateFrom, dateTo)), DEBOUNCE_MS);
+    const id = setTimeout(
+      () => router.replace(buildUrl(query, dateFrom, dateTo)),
+      DEBOUNCE_MS,
+    );
     return () => clearTimeout(id);
   }, [query, dateFrom, dateTo, q, router]);
 
   return (
     <form className="grid gap-3 sm:grid-cols-[1fr_auto_auto_auto_auto] sm:items-end">
+      {/* Search — full width on all breakpoints */}
       <input
         name="q"
         value={query}
@@ -45,18 +57,36 @@ export function DonationFilters({ q, from, to }: { q: string; from: string; to: 
         aria-label={t("common.search")}
         className={inputCls}
       />
-      <label className="text-sm text-stone-600">
-        {t("common.from")}
-        <BsDatePicker name="from" value={dateFrom} onChange={setDateFrom} clearable />
-      </label>
-      <label className="text-sm text-stone-600">
-        {t("common.to")}
-        <BsDatePicker name="to" value={dateTo} onChange={setDateTo} clearable />
-      </label>
-      <button className={btnPrimary}>{t("common.filter")}</button>
-      <Link href="/donations" className={btnGhost}>
-        {t("common.clear")}
-      </Link>
+
+      {/* Date pickers — side by side on mobile, individual columns on sm+ */}
+      <div className="grid grid-cols-2 gap-3 sm:contents">
+        <label className="text-sm text-stone-600">
+          {t("common.from")}
+          <BsDatePicker
+            name="from"
+            value={dateFrom}
+            onChange={setDateFrom}
+            clearable
+          />
+        </label>
+        <label className="text-sm text-stone-600">
+          {t("common.to")}
+          <BsDatePicker
+            name="to"
+            value={dateTo}
+            onChange={setDateTo}
+            clearable
+          />
+        </label>
+      </div>
+
+      {/* Action buttons — side by side on mobile, individual columns on sm+ */}
+      <div className="grid grid-cols-2 gap-3 sm:contents">
+        <button className={btnPrimary}>{t("common.filter")}</button>
+        <Link href="/donations" className={btnGhost}>
+          {t("common.clear")}
+        </Link>
+      </div>
     </form>
   );
 }

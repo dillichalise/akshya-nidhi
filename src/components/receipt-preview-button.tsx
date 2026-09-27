@@ -85,14 +85,14 @@ export function ReceiptPreviewModal({
       ref={dialogRef}
       onClose={onClose}
       onClick={handleBackdropClick}
-      className="m-auto w-full max-w-3xl rounded-xl border-0 bg-transparent p-0 shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-sm"
+      className="m-auto w-[calc(100%-2rem)] max-w-3xl rounded-xl border-0 bg-transparent p-0 shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-sm"
     >
       <div
-        className="flex flex-col overflow-hidden rounded-xl bg-white"
+        className="flex max-h-[90dvh] flex-col overflow-hidden rounded-xl bg-white"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3">
+        <div className="flex shrink-0 items-center justify-between border-b border-stone-200 px-4 py-3">
           <h2 className="text-base font-semibold text-stone-800">
             {t("previewTitle")}
           </h2>
@@ -120,7 +120,10 @@ export function ReceiptPreviewModal({
         </div>
 
         {/* PDF preview area */}
-        <div className="relative h-[65vh] w-full bg-stone-100">
+        <div
+          className="relative min-h-0 flex-1 bg-stone-100"
+          style={{ minHeight: "50dvh" }}
+        >
           {(loadState === "idle" || loadState === "loading") && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-stone-500">
               <svg
@@ -180,7 +183,7 @@ export function ReceiptPreviewModal({
         </div>
 
         {/* Footer */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-stone-200 px-4 py-3">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-stone-200 px-4 py-3">
           {/* Left slot — extra actions (e.g. Add New Donation) */}
           <div className="flex gap-2">{extraActions}</div>
 
