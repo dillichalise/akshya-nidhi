@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   amountInWords,
+  formatAmountInput,
   formatDate,
   formatDateTime,
   formatNPR,
@@ -27,6 +28,23 @@ describe("toNepaliDigits", () => {
   it("passes strings/numbers through unchanged for `en`", () => {
     expect(toNepaliDigits("12,345.50", "en")).toBe("12,345.50");
     expect(toNepaliDigits(2083, "en")).toBe("2083");
+  });
+});
+
+describe("formatAmountInput", () => {
+  it("applies lakh/crore grouping to whole numbers", () => {
+    expect(formatAmountInput("125000")).toBe("1,25,000");
+    expect(formatAmountInput("1000")).toBe("1,000");
+    expect(formatAmountInput("10000000")).toBe("1,00,00,000");
+  });
+  it("preserves the decimal part without forcing 2dp", () => {
+    expect(formatAmountInput("125000.5")).toBe("1,25,000.5");
+    expect(formatAmountInput("500.25")).toBe("500.25");
+  });
+  it("passes through in-progress / invalid input unchanged", () => {
+    expect(formatAmountInput("")).toBe("");
+    expect(formatAmountInput("100.")).toBe("100.");
+    expect(formatAmountInput("abc")).toBe("abc");
   });
 });
 

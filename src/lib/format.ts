@@ -48,6 +48,28 @@ export function formatNPR(
   return prefix + toNepaliDigits(grouped, locale);
 }
 
+/**
+ * Formats a raw numeric string for display inside the amount input field.
+ * Uses lakh/crore grouping (en-IN), no currency prefix, no forced decimal places.
+ * Returns the original string unchanged if it isn't a valid positive number so the
+ * user's in-progress typing (e.g. "1,2" or "100.") is not clobbered.
+ * e.g. "125000" → "1,25,000"   "125000.5" → "1,25,000.5"
+ */
+export function formatAmountInput(raw: string): string {
+  if (!raw.trim()) return "";
+  // Only format when the value is a clean number (no trailing dot / incomplete decimal)
+  if (!/^\d+(\.\d+)?$/.test(raw)) return raw;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return raw;
+  // Split integer and decimal parts so we only group the integer side
+  const [intPart, decPart] = raw.split(".");
+  const grouped = new Intl.NumberFormat("en-IN", {
+    maximumFractionDigits: 0,
+    useGrouping: true,
+  }).format(Number(intPart));
+  return decPart !== undefined ? `${grouped}.${decPart}` : grouped;
+}
+
 // ── Amount in words ────────────────────────────────────────────────────────────
 
 const EN_ONES = [

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { type FormState } from "@/actions/types";
-import { amountInWords, formatNPR } from "@/lib/format";
+import { amountInWords, formatAmountInput, formatNPR } from "@/lib/format";
 import { receiptFileName } from "@/lib/receipts/shared";
 import { BsDatePicker } from "./bs-date-picker";
 import { ReceiptPreviewModal } from "./receipt-preview-button";
@@ -33,8 +33,13 @@ export function DonationForm({
   const err = (f: string) =>
     state.errors[f] ? t(`errors.${state.errors[f]}`) : undefined;
 
-  // Live amount preview — initialise from existing value when editing.
+  // Live amount state.
+  // rawAmount  — plain numeric string (digits + optional dot), used for validation/submit.
+  // dispAmount — comma-grouped display string shown in the visible input.
   const [rawAmount, setRawAmount] = useState(v.amount ?? "");
+  const [dispAmount, setDispAmount] = useState(
+    v.amount ? formatAmountInput(v.amount) : "",
+  );
 
   // Receipt modal state — only relevant on the "add" form (not edit).
   const [receiptOpen, setReceiptOpen] = useState(false);
@@ -49,6 +54,7 @@ export function DonationForm({
       setSavedDate(v.donationDate ?? "");
       setReceiptOpen(true);
       setRawAmount("");
+      setDispAmount("");
       // Focus will move to the name field once the modal is closed
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -179,26 +185,52 @@ export function DonationForm({
             name="amount"
             error={err("amount")}
           >
-            <input
-              id="amount"
-              name="amount"
-              inputMode="decimal"
-              defaultValue={v.amount}
-              autoComplete="off"
-              aria-invalid={!!state.errors.amount}
-              aria-describedby="amount-error"
-              className={inputCls + " tabular-nums"}
-              onChange={(e) => setRawAmount(e.target.value)}
-            />
+            {/* Hidden field carries the raw value for server action validation */}
+            <input type="hidden" name="amount" value={rawAmount} />
+
+            {/* Visible grouped input with currency prefix addon */}
+            <div
+              className={
+                "flex overflow-hidden rounded-lg border border-stone-300 bg-white " +
+                "focus-within:border-amber-600 focus-within:ring-2 focus-within:ring-amber-600/30 " +
+                (state.errors.amount ? "border-red-500" : "")
+              }
+            >
+              {/* Currency badge */}
+              <span className="flex items-center border-r border-stone-300 bg-stone-50 px-3 text-sm font-semibold text-stone-600 select-none">
+                {locale === "ne" ? "रु" : "Rs"}
+              </span>
+
+              {/* Amount input — shows comma-grouped value, no border/ring (handled by wrapper) */}
+              <input
+                id="amount"
+                inputMode="decimal"
+                value={dispAmount}
+                autoComplete="off"
+                aria-invalid={!!state.errors.amount}
+                aria-describedby="amount-error"
+                placeholder="0"
+                className={
+                  "block w-full min-h-11 bg-transparent px-3 py-2 text-base " +
+                  "text-stone-900 tabular-nums placeholder:text-stone-400 " +
+                  "focus:outline-none"
+                }
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/,/g, "");
+                  setRawAmount(raw);
+                  setDispAmount(formatAmountInput(raw));
+                }}
+              />
+            </div>
+
+            {/* Live formatted preview (with currency prefix + 2dp) */}
             {formattedAmount && (
               <p className="mt-1 text-sm font-medium tabular-nums text-stone-700">
                 {formattedAmount}
               </p>
             )}
             {wordsAmount && (
-              <p className="mt-0.5 text-xs italic text-stone-500">
-                {wordsAmount}
-              </p>
+              <p className="mt-0.5 text-xs text-stone-500">{wordsAmount}</p>
             )}
           </Field>
         </div>
