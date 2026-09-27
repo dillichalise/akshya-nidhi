@@ -14,15 +14,21 @@ export async function createDonationAction(_prev: FormState, formData: FormData)
   const parsed = donationSchema.safeParse(values);
   if (!parsed.success) return { status: "error", errors: zodErrors(parsed.error), values };
 
+  let row: { id: string } | undefined;
   try {
-    await createDonation(parsed.data, user.id);
+    row = await createDonation(parsed.data, user.id);
   } catch {
     return { status: "error", errors: {}, values, message: "errors.generic" };
   }
   revalidatePath("/donations");
   revalidatePath("/dashboard");
   // Keep the chosen date so several entries for the same day are quick.
-  return { status: "success", errors: {}, values: { donationDate: parsed.data.donationDate, _ts: String(Date.now()) }, message: "donation.added" };
+  return {
+    status: "success",
+    errors: {},
+    values: { donationDate: parsed.data.donationDate, _ts: String(Date.now()), receiptId: row?.id ?? "" },
+    message: "donation.added",
+  };
 }
 
 export async function updateDonationAction(_prev: FormState, formData: FormData): Promise<FormState> {

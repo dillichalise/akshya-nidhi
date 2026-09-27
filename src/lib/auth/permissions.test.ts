@@ -8,6 +8,7 @@ const expected: Record<Permission, Role[]> = {
   "donation:list": ["super_admin", "admin"],
   "donation:edit": ["super_admin"],
   "donation:delete": ["super_admin"],
+  "donation:receipt": ["super_admin", "admin", "user"],
   "user:list": ["super_admin", "admin"],
   "user:manage": ["super_admin"],
   "report:download": ["super_admin", "admin"],

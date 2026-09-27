@@ -88,6 +88,17 @@
     "sn": "S.N.",
     "tooLarge": "Please choose a range of at most 2 years."
   },
+  "receipt": {
+    "title": "Donation Receipt",
+    "receiptNo": "Receipt No. {id}",
+    "receivedFrom": "Received with thanks from",
+    "thanks": "Thank you for your generous support.",
+    "issuedBy": "Issued by {name}",
+    "generatedOn": "Generated on {when}",
+    "footerNote": "This is a computer-generated receipt and does not require a signature.",
+    "download": "Download receipt",
+    "linkLabel": "Receipt"
+  },
   "users": {
     "title": "Users",
     "new": "Add user",

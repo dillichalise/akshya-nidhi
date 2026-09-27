@@ -38,7 +38,19 @@ export function DonationForm({
   return (
     <form key={formKey} ref={formRef} action={formAction} className="space-y-4" noValidate>
       {donationId && <input type="hidden" name="id" value={donationId} />}
-      {state.status === "success" && state.message && <Alert kind="success">{t(state.message)}</Alert>}
+      {state.status === "success" && state.message && (
+        <Alert kind="success">
+          {t(state.message)}
+          {v.receiptId && (
+            <>
+              {" "}
+              <a href={`/api/donations/${v.receiptId}/receipt`} className="font-medium underline">
+                {t("receipt.download")}
+              </a>
+            </>
+          )}
+        </Alert>
+      )}
       {state.status === "error" && state.message && <Alert kind="error">{t(state.message)}</Alert>}
 
       <Field label={t("donation.name")} name="donorName" error={err("donorName")}>

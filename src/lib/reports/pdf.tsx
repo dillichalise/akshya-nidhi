@@ -1,26 +1,10 @@
 import "server-only";
-import path from "node:path";
-import { Document, Font, Page, renderToBuffer, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Document, Page, renderToBuffer, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { formatDate, formatNPR } from "@/lib/format";
+import { MixedText as T, registerPdfFonts } from "@/lib/pdf/shared";
 import type { ReportData, ReportLabels } from "./shared";
 
-const fontDir = path.join(process.cwd(), "assets", "fonts");
-Font.register({
-  family: "NotoLatin",
-  fonts: [
-    { src: path.join(fontDir, "NotoSans-Regular.woff"), fontWeight: 400 },
-    { src: path.join(fontDir, "NotoSans-Bold.woff"), fontWeight: 700 },
-  ],
-});
-Font.register({
-  family: "NotoDeva",
-  fonts: [
-    { src: path.join(fontDir, "NotoSansDevanagari-Regular.woff"), fontWeight: 400 },
-    { src: path.join(fontDir, "NotoSansDevanagari-Bold.woff"), fontWeight: 700 },
-  ],
-});
-// No hyphenation: it mangles names and Devanagari words.
-Font.registerHyphenationCallback((w) => [w]);
+registerPdfFonts();
 
 const s = StyleSheet.create({
   page: { padding: 28, fontFamily: "NotoLatin", fontSize: 9, color: "#1c1917" },
@@ -34,20 +18,6 @@ const s = StyleSheet.create({
 });
 
 const W = { sn: 30, date: 100, name: 112, phone: 76, address: 150, amount: 104, remarks: 174 };
-
-/** Renders mixed English/Devanagari text by switching font per script run. */
-function T({ children, bold }: { children: string; bold?: boolean }) {
-  const parts = children.split(/([ऀ-ॿ]+(?:[ ऀ-ॿ]+)*)/g).filter(Boolean);
-  return (
-    <Text style={{ fontWeight: bold ? 700 : 400 }}>
-      {parts.map((p, i) => (
-        <Text key={i} style={{ fontFamily: /[ऀ-ॿ]/.test(p) ? "NotoDeva" : "NotoLatin" }}>
-          {p}
-        </Text>
-      ))}
-    </Text>
-  );
-}
 
 function Cell({ w, right, bold, children }: { w: number; right?: boolean; bold?: boolean; children: string }) {
   return (

@@ -25,16 +25,18 @@ export default async function DonationsPage({
   const to = sp.to && ymd.test(sp.to) ? sp.to : undefined;
   const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
 
-  const [{ rows, total }, t, tc, tn, locale] = await Promise.all([
+  const [{ rows, total }, t, tc, tn, tr, locale] = await Promise.all([
     listDonations({ q, from, to, page, pageSize: PAGE_SIZE }),
     getTranslations("donation"),
     getTranslations("common"),
     getTranslations("nav"),
+    getTranslations("receipt"),
     getLocale(),
   ]);
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const canEdit = can(user.role, "donation:edit");
   const canDelete = can(user.role, "donation:delete");
+  const canReceipt = can(user.role, "donation:receipt");
 
   const hrefFor = (p: number) => {
     const u = new URLSearchParams();
@@ -81,7 +83,7 @@ export default async function DonationsPage({
                   <th className="px-3 py-2 text-right">{t("amount")}</th>
                   <th className="px-3 py-2">{t("remarks")}</th>
                   <th className="px-3 py-2">{t("addedBy")}</th>
-                  {(canEdit || canDelete) && <th className="px-3 py-2">{tc("actions")}</th>}
+                  {(canEdit || canDelete || canReceipt) && <th className="px-3 py-2">{tc("actions")}</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
@@ -94,9 +96,17 @@ export default async function DonationsPage({
                     <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatNPR(r.amount)}</td>
                     <td className="max-w-48 px-3 py-2 text-stone-600">{r.remarks}</td>
                     <td className="px-3 py-2 text-stone-600">{r.createdByName}</td>
-                    {(canEdit || canDelete) && (
+                    {(canEdit || canDelete || canReceipt) && (
                       <td className="whitespace-nowrap px-3 py-2">
                         <div className="flex gap-2">
+                          {canReceipt && (
+                            <a
+                              href={`/api/donations/${r.id}/receipt`}
+                              className={btnGhost + " !min-h-9 !px-3 !py-1 text-sm"}
+                            >
+                              {tr("linkLabel")}
+                            </a>
+                          )}
                           {canEdit && (
                             <Link href={`/donations/${r.id}/edit`} className={btnGhost + " !min-h-9 !px-3 !py-1 text-sm"}>
                               {tc("edit")}
@@ -134,8 +144,13 @@ export default async function DonationsPage({
                   {formatDate(r.donationDate, locale)} · {r.createdByName}
                 </div>
                 {r.remarks && <div className="mt-1 text-sm text-stone-600">{r.remarks}</div>}
-                {(canEdit || canDelete) && (
+                {(canEdit || canDelete || canReceipt) && (
                   <div className="mt-3 flex gap-2">
+                    {canReceipt && (
+                      <a href={`/api/donations/${r.id}/receipt`} className={btnGhost + " !min-h-9 !px-3 !py-1 text-sm"}>
+                        {tr("linkLabel")}
+                      </a>
+                    )}
                     {canEdit && (
                       <Link href={`/donations/${r.id}/edit`} className={btnGhost + " !min-h-9 !px-3 !py-1 text-sm"}>
                         {tc("edit")}

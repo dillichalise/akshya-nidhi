@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { donations } from "@/db/schema";
 import { setupTestDb } from "@/test/db";
 import { todayInNepal } from "@/lib/format";
-import { createDonation, listDonations, softDeleteDonation, updateDonation } from "./donations";
+import { createDonation, getDonationForReceipt, listDonations, softDeleteDonation, updateDonation } from "./donations";
 import { getReport, getTopDonors, getTotals } from "./reports";
 import { countOtherActiveSuperAdmins, createUser, findUserForLogin, getUserById } from "./users";
 
@@ -67,6 +67,17 @@ describe("donations", () => {
     await updateDonation(gone.id, donation({ donorName: "Changed" }));
     const after = await (await import("@/db")).db().select().from(donations);
     expect(after.find((r) => r.id === gone.id)!.donorName).toBe("Deleted Donor");
+  });
+  it("fetches a single donation with the recorder's name for its receipt", async () => {
+    const all = await (await import("@/db")).db().select().from(donations);
+    const ram = all.find((r) => r.donorName === "Ram Sharma" && r.amount === "1000.50")!;
+    const r = await getDonationForReceipt(ram.id);
+    expect(r).toMatchObject({ donorName: "Ram Sharma", amount: "1000.50", createdBy: userId, createdByName: "Root" });
+  });
+  it("does not return a receipt for a soft-deleted donation", async () => {
+    const all = await (await import("@/db")).db().select().from(donations);
+    const gone = all.find((r) => r.donorName === "Deleted Donor")!;
+    expect(await getDonationForReceipt(gone.id)).toBeNull();
   });
 });
 

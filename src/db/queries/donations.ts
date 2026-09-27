@@ -24,6 +24,27 @@ export async function getDonation(id: string) {
   return row ?? null;
 }
 
+/** Single donation plus the recorder's name, for the receipt PDF. */
+export async function getDonationForReceipt(id: string) {
+  const [row] = await db()
+    .select({
+      id: donations.id,
+      donorName: donations.donorName,
+      address: donations.address,
+      phone: donations.phone,
+      amount: donations.amount,
+      donationDate: donations.donationDate,
+      remarks: donations.remarks,
+      createdBy: donations.createdBy,
+      createdByName: users.fullName,
+    })
+    .from(donations)
+    .leftJoin(users, eq(users.id, donations.createdBy))
+    .where(and(eq(donations.id, id), activeDonations))
+    .limit(1);
+  return row ?? null;
+}
+
 export async function updateDonation(id: string, input: DonationInput) {
   await db()
     .update(donations)
