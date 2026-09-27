@@ -4,6 +4,7 @@ import { deleteDonationAction } from "@/actions/donations";
 import { DonationFilters } from "@/components/donation-filters";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { Pagination } from "@/components/pagination";
+import { ReceiptPreviewButton } from "@/components/receipt-preview-button";
 import { btnPrimary, Card, PageTitle } from "@/components/ui";
 import {
   listDonations,
@@ -13,6 +14,7 @@ import {
 import { can } from "@/lib/auth/permissions";
 import { requirePermission } from "@/lib/auth/session";
 import { formatDate, formatNPR, localizedCount } from "@/lib/format";
+import { receiptFileName } from "@/lib/receipts/shared";
 
 const PAGE_SIZE = 20;
 const ymd = /^\d{4}-\d{2}-\d{2}$/;
@@ -96,12 +98,11 @@ export default async function DonationsPage({
     : undefined;
   const order: SortOrder = sp.order === "asc" ? "asc" : "desc";
 
-  const [{ rows, total }, t, tc, tn, tr, locale] = await Promise.all([
+  const [{ rows, total }, t, tc, tn, locale] = await Promise.all([
     listDonations({ q, from, to, page, pageSize: PAGE_SIZE, sort, order }),
     getTranslations("donation"),
     getTranslations("common"),
     getTranslations("nav"),
-    getTranslations("receipt"),
     getLocale(),
   ]);
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -232,36 +233,10 @@ export default async function DonationsPage({
                       <td className="whitespace-nowrap px-3 py-2">
                         <div className="flex gap-1">
                           {canReceipt && (
-                            <a
-                              href={`/api/donations/${r.id}/receipt`}
-                              title={tr("linkLabel")}
-                              aria-label={tr("linkLabel")}
-                              className="group relative inline-flex h-8 w-8 items-center justify-center rounded-lg border border-stone-300 bg-white text-stone-600 hover:bg-stone-50 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-600/30"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                aria-hidden="true"
-                              >
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                <polyline points="14 2 14 8 20 8" />
-                                <line x1="16" y1="13" x2="8" y2="13" />
-                                <line x1="16" y1="17" x2="8" y2="17" />
-                                <polyline points="10 9 9 9 8 9" />
-                              </svg>
-                              <span
-                                className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-stone-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
-                                role="tooltip"
-                              >
-                                {tr("linkLabel")}
-                              </span>
-                            </a>
+                            <ReceiptPreviewButton
+                              receiptUrl={`/api/donations/${r.id}/receipt`}
+                              fileName={`${receiptFileName(r)}.pdf`}
+                            />
                           )}
                           {canEdit && (
                             <Link
@@ -347,30 +322,10 @@ export default async function DonationsPage({
                 {(canEdit || canDelete || canReceipt) && (
                   <div className="mt-3 flex gap-1">
                     {canReceipt && (
-                      <a
-                        href={`/api/donations/${r.id}/receipt`}
-                        title={tr("linkLabel")}
-                        aria-label={tr("linkLabel")}
-                        className="group relative inline-flex h-8 w-8 items-center justify-center rounded-lg border border-stone-300 bg-white text-stone-600 hover:bg-stone-50 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-600/30"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden="true"
-                        >
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                          <polyline points="14 2 14 8 20 8" />
-                          <line x1="16" y1="13" x2="8" y2="13" />
-                          <line x1="16" y1="17" x2="8" y2="17" />
-                          <polyline points="10 9 9 9 8 9" />
-                        </svg>
-                      </a>
+                      <ReceiptPreviewButton
+                        receiptUrl={`/api/donations/${r.id}/receipt`}
+                        fileName={`${receiptFileName(r)}.pdf`}
+                      />
                     )}
                     {canEdit && (
                       <Link

@@ -100,7 +100,10 @@
     "issuedBy": "Issued by {name}",
     "generatedOn": "Generated on {when}",
     "footerNote": "This is a computer-generated receipt and does not require a signature.",
-    "download": "Download receipt",
+    "download": "Download",
+    "print": "Print",
+    "previewTitle": "Receipt Preview",
+    "close": "Close",
     "linkLabel": "Receipt"
   },
   "users": {
