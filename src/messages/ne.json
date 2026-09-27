@@ -24,7 +24,11 @@
     "optional": "ऐच्छिक",
     "yes": "हो",
     "no": "होइन",
-    "records": "{count} अभिलेख"
+    "records": "{count} अभिलेख",
+    "selectDate": "मिति चयन गर्नुहोस्",
+    "today": "आज",
+    "previousMonth": "अघिल्लो महिना",
+    "nextMonth": "अर्को महिना"
   },
   "nav": {
     "dashboard": "ड्यासबोर्ड",

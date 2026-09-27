@@ -1,6 +1,7 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { getReport } from "@/db/queries/reports";
-import { Alert, btnGhost, btnPrimary, Card, inputCls, PageTitle } from "@/components/ui";
+import { BsDatePicker } from "@/components/bs-date-picker";
+import { Alert, btnGhost, btnPrimary, Card, PageTitle } from "@/components/ui";
 import { requirePermission } from "@/lib/auth/session";
 import { formatDate, formatNPR, todayInNepal } from "@/lib/format";
 import { MAX_RANGE_DAYS, periodText, rangeDays } from "@/lib/reports/shared";
@@ -38,11 +39,11 @@ export default async function ReportsPage({
         <form className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
           <label className="text-sm text-stone-600">
             {tc("from")} ({t("single")})
-            <input type="date" name="from" defaultValue={from} required className={inputCls} />
+            <BsDatePicker name="from" defaultValue={from} />
           </label>
           <label className="text-sm text-stone-600">
             {tc("to")} ({tc("optional")}: {t("range")})
-            <input type="date" name="to" defaultValue={sp.to && sp.to !== from ? sp.to : ""} className={inputCls} />
+            <BsDatePicker name="to" defaultValue={sp.to && sp.to !== from ? sp.to : ""} clearable />
           </label>
           <button className={btnPrimary}>{t("generate")}</button>
         </form>

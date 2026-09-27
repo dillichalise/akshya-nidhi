@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { type FormState } from "@/actions/types";
+import { BsDatePicker } from "./bs-date-picker";
 import { Alert, btnGhost, btnPrimary, Field, inputCls } from "./ui";
 
 type Action = (prev: FormState, formData: FormData) => Promise<FormState>;
@@ -104,15 +105,12 @@ export function DonationForm({
         </Field>
       </div>
       <Field label={t("donation.date")} name="donationDate" error={err("donationDate")}>
-        <input
-          id="donationDate"
+        <BsDatePicker
           name="donationDate"
-          type="date"
           max={today}
           defaultValue={v.donationDate ?? today}
           aria-invalid={!!state.errors.donationDate}
           aria-describedby="donationDate-error"
-          className={inputCls}
         />
       </Field>
       <Field label={`${t("donation.remarks")} (${t("common.optional")})`} name="remarks" error={err("remarks")}>

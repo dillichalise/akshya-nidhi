@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { BsDatePicker } from "./bs-date-picker";
 import { btnGhost, btnPrimary, inputCls } from "./ui";
 
 const DEBOUNCE_MS = 3000;
@@ -46,11 +47,11 @@ export function DonationFilters({ q, from, to }: { q: string; from: string; to: 
       />
       <label className="text-sm text-stone-600">
         {t("common.from")}
-        <input type="date" name="from" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={inputCls} />
+        <BsDatePicker name="from" value={dateFrom} onChange={setDateFrom} clearable />
       </label>
       <label className="text-sm text-stone-600">
         {t("common.to")}
-        <input type="date" name="to" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={inputCls} />
+        <BsDatePicker name="to" value={dateTo} onChange={setDateTo} clearable />
       </label>
       <button className={btnPrimary}>{t("common.filter")}</button>
       <Link href="/donations" className={btnGhost}>

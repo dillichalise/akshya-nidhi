@@ -24,7 +24,11 @@
     "optional": "optional",
     "yes": "Yes",
     "no": "No",
-    "records": "{count, plural, one {# record} other {# records}}"
+    "records": "{count, plural, one {# record} other {# records}}",
+    "selectDate": "Select date",
+    "today": "Today",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month"
   },
   "nav": {
     "dashboard": "Dashboard",

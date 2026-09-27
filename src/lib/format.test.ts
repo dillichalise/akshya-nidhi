@@ -19,10 +19,10 @@ describe("todayInNepal", () => {
 });
 
 describe("formatDate", () => {
-  it("formats AD dates without shifting the day", () => {
-    expect(formatDate("2026-09-26")).toContain("26");
-    expect(formatDate("2026-09-26")).toContain("2026");
-    expect(formatDate("2026-09-26")).toBe("26 Sep 2026");
-    expect(formatDate("2026-01-01", "ne")).toMatch(/^1 .+ 2026$/);
+  it("converts the stored AD date to its Bikram Sambat display", () => {
+    // 2026-09-26 AD is Aswin 10, 2083 BS.
+    expect(formatDate("2026-09-26")).toBe("10 Aswin 2083");
+    // 2026-01-01 AD is Poush 17, 2082 BS; Western digits even in the `ne` locale.
+    expect(formatDate("2026-01-01", "ne")).toMatch(/^17 .+ 2082$/);
   });
 });

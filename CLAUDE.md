@@ -30,6 +30,7 @@ reports. No public pages. **No SEO concerns.** Deployed on **Vercel**, free tier
 | Excel | ExcelJS |
 | Charts | Recharts (optional) |
 | Tests | Vitest. DB query tests run against in-process Postgres (PGlite, dev dep) using the real migrations — see `src/test/db.ts` |
+| Nepali calendar | `nepali-date-converter` for AD↔BS date math only (MIT, zero deps), wrapped by `src/lib/bs-date.ts`. Used by the entry picker (`src/components/bs-date-picker.tsx`, hand-built, matching the "no component library" convention above) and by every display formatter (`formatDate`/`formatDateTime` in `src/lib/format.ts`) — all dates shown in the UI are BS |
 
 Not in scope now: file/receipt uploads (planned later — Cloudflare R2 or Vercel Blob,
 private bucket + signed URLs, direct-from-browser upload). Do not build it yet, but do not
@@ -43,9 +44,23 @@ design anything that blocks it (e.g. keep `donations.id` stable, allow a future
   Display with lakh/crore grouping (`Rs 1,25,000.00`, `en-IN` style), in both languages.
 - **Time zone:** `Asia/Kathmandu` (UTC+5:45). "Today" for the dashboard is computed in
   this zone. `donation_date` is a plain `date` (AD), separate from `created_at`.
-- **Calendar:** AD only, in both English and Nepali UIs. No Bikram Sambat for now.
+- **Calendar:** storage and domain logic stay AD-only — `donation_date` and every other
+  date column, plus all validation (`donationSchema`, `dateRangeSchema`), `donation_date <=
+  today` checks, and report/dashboard date-range math, are plain AD `date`s. **Every date
+  shown or entered in the UI is Bikram Sambat** — both the picker (`BsDatePicker`) and every
+  display (`formatDate`/`formatDateTime` in `src/lib/format.ts`, conversion in
+  `src/lib/bs-date.ts`) convert to/from AD at the boundary, so the DB, Zod schemas, and
+  report SQL never see or produce a BS value. This reverses the project's earlier "No
+  Bikram Sambat for now" / "AD only, in both English and Nepali UIs" decision
+  (owner-approved 2026-09-27) — the reversal is UI-only (entry + display); storage,
+  validation, and reports keep computing in AD, and `formatDate`/`formatDateTime` are the
+  *only* sanctioned place the AD→BS conversion happens for display, so PDF/Excel/on-screen
+  stay identical (single source of truth, per the `reports-export` skill). Filenames
+  (`donations_YYYY-MM-DD.pdf`, `receipt_YYYY-MM-DD_...`) are left AD — they're stable
+  identifiers, not UI copy.
 - **Nepali numerals:** UI text is translated; numbers stay Western digits unless a
-  later decision changes this.
+  later decision changes this. This applies to BS dates too — day/year digits are always
+  Western, only the month/weekday name is Devanagari in the `ne` locale.
 
 ## Roles & Permissions (source of truth)
 

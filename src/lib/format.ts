@@ -1,3 +1,5 @@
+import { adToBs, bsMonthName } from "./bs-date";
+
 export const TIME_ZONE = "Asia/Kathmandu";
 
 /** NPR with lakh/crore grouping, e.g. "Rs 1,25,000.00". Same in every locale. */
@@ -13,19 +15,14 @@ export function formatNPR(amount: string | number): string {
   );
 }
 
-/** "YYYY-MM-DD" (AD) -> "26 Sep 2026" (Nepali month names in `ne`), always day-month-year, Western digits. */
+/**
+ * "YYYY-MM-DD" (AD, as stored) -> its Bikram Sambat display, e.g. "11 Aswin 2083"
+ * (Devanagari month name in `ne`). Every date shown in the UI is BS — see CLAUDE.md.
+ * Day/year stay Western digits; only the month name is localized.
+ */
 export function formatDate(ymd: string, locale: string = "en"): string {
-  const [y, m, d] = ymd.split("-").map(Number);
-  const date = new Date(Date.UTC(y, m - 1, d, 12));
-  const tag = locale === "ne" ? "ne-NP-u-nu-latn-ca-gregory" : "en-US";
-  const parts = new Intl.DateTimeFormat(tag, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  }).formatToParts(date);
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
-  return `${get("day")} ${get("month")} ${get("year")}`;
+  const bs = adToBs(ymd);
+  return `${bs.date} ${bsMonthName(bs.year, bs.month, locale)} ${bs.year}`;
 }
 
 /** The calendar date in Nepal for an instant, as "YYYY-MM-DD", regardless of server time zone. */
@@ -38,14 +35,11 @@ export function dateInNepal(d: Date): string {
   }).format(d);
 }
 
-/** Timestamp in Nepal time, e.g. "26 Sep 2026, 11:42 PM". */
+/** Timestamp in Nepal time, BS date + local time, e.g. "11 Aswin 2083, 11:42 PM". */
 export function formatDateTime(d: Date, locale: string = "en"): string {
-  const tag = locale === "ne" ? "ne-NP-u-nu-latn-ca-gregory" : "en-US";
-  return new Intl.DateTimeFormat(tag, {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: TIME_ZONE,
-  }).format(d);
+  const tag = locale === "ne" ? "ne-NP-u-nu-latn" : "en-US";
+  const time = new Intl.DateTimeFormat(tag, { timeStyle: "short", timeZone: TIME_ZONE }).format(d);
+  return `${formatDate(dateInNepal(d), locale)}, ${time}`;
 }
 
 /** Today's date in Nepal as "YYYY-MM-DD". */
