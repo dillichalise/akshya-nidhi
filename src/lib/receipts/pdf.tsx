@@ -58,11 +58,11 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  amountLabel: { fontSize: 11, color: "#78350f", fontWeight: 700 },
-  amountValue: { fontSize: 20, fontWeight: 700, color: "#78350f" },
+  amountLabel: { fontSize: 13, color: "#78350f", fontWeight: 700 },
+  amountValue: { fontSize: 26, fontWeight: 700, color: "#78350f" },
   amountWords: {
-    marginTop: 5,
-    fontSize: 9,
+    marginTop: 6,
+    fontSize: 11,
     color: "#92400e",
   },
   thanks: {

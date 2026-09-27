@@ -8,13 +8,18 @@ const publicColumns = {
   id: users.id,
   username: users.username,
   fullName: users.fullName,
+  phone: users.phone,
   role: users.role,
   isActive: users.isActive,
   createdAt: users.createdAt,
 };
 
 export async function getUserById(id: string) {
-  const [row] = await db().select(publicColumns).from(users).where(eq(users.id, id)).limit(1);
+  const [row] = await db()
+    .select(publicColumns)
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1);
   return row ?? null;
 }
 
@@ -35,14 +40,21 @@ export function listUsers() {
 export async function createUser(input: {
   username: string;
   fullName: string;
+  phone: string;
   passwordHash: string;
   role: Role;
 }) {
-  const [row] = await db().insert(users).values(input).returning({ id: users.id });
+  const [row] = await db()
+    .insert(users)
+    .values(input)
+    .returning({ id: users.id });
   return row;
 }
 
-export async function updateUser(id: string, input: { fullName: string; role: Role; isActive: boolean }) {
+export async function updateUser(
+  id: string,
+  input: { fullName: string; phone: string; role: Role; isActive: boolean },
+) {
   await db()
     .update(users)
     .set({ ...input, updatedAt: new Date() })
@@ -50,7 +62,10 @@ export async function updateUser(id: string, input: { fullName: string; role: Ro
 }
 
 export async function setUserPassword(id: string, passwordHash: string) {
-  await db().update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, id));
+  await db()
+    .update(users)
+    .set({ passwordHash, updatedAt: new Date() })
+    .where(eq(users.id, id));
 }
 
 /** Active super_admins other than `excludeId` — used to protect the last one. */
@@ -58,6 +73,12 @@ export async function countOtherActiveSuperAdmins(excludeId: string) {
   const [row] = await db()
     .select({ n: count() })
     .from(users)
-    .where(and(eq(users.role, "super_admin"), eq(users.isActive, true), ne(users.id, excludeId)));
+    .where(
+      and(
+        eq(users.role, "super_admin"),
+        eq(users.isActive, true),
+        ne(users.id, excludeId),
+      ),
+    );
   return row?.n ?? 0;
 }

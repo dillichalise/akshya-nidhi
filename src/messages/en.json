@@ -110,6 +110,7 @@
     "username": "Username",
     "fullName": "Full name",
     "role": "Role",
+    "phone": "Phone number",
     "status": "Status",
     "active": "Active",
     "inactive": "Inactive",

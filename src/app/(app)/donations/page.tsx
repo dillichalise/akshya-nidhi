@@ -5,13 +5,73 @@ import { DonationFilters } from "@/components/donation-filters";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { Pagination } from "@/components/pagination";
 import { btnPrimary, Card, PageTitle } from "@/components/ui";
-import { listDonations } from "@/db/queries/donations";
+import {
+  listDonations,
+  type SortColumn,
+  type SortOrder,
+} from "@/db/queries/donations";
 import { can } from "@/lib/auth/permissions";
 import { requirePermission } from "@/lib/auth/session";
 import { formatDate, formatNPR, localizedCount } from "@/lib/format";
 
 const PAGE_SIZE = 20;
 const ymd = /^\d{4}-\d{2}-\d{2}$/;
+const SORT_COLS = new Set<string>([
+  "donationDate",
+  "donorName",
+  "address",
+  "amount",
+]);
+
+/** Chevron icons for sort direction indicator */
+function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
+  if (!active) {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="ml-1 inline h-3 w-3 opacity-30"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M12 5v14M5 12l7-7 7 7" />
+      </svg>
+    );
+  }
+  return order === "asc" ? (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="ml-1 inline h-3 w-3 text-amber-700"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 19V5M5 12l7-7 7 7" />
+    </svg>
+  ) : (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="ml-1 inline h-3 w-3 text-amber-700"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 5v14M5 12l7 7 7-7" />
+    </svg>
+  );
+}
 
 export default async function DonationsPage({
   searchParams,
@@ -21,6 +81,8 @@ export default async function DonationsPage({
     from?: string;
     to?: string;
     page?: string;
+    sort?: string;
+    order?: string;
   }>;
 }) {
   const user = await requirePermission("donation:list");
@@ -29,9 +91,13 @@ export default async function DonationsPage({
   const from = sp.from && ymd.test(sp.from) ? sp.from : undefined;
   const to = sp.to && ymd.test(sp.to) ? sp.to : undefined;
   const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
+  const sort: SortColumn | undefined = SORT_COLS.has(sp.sort ?? "")
+    ? (sp.sort as SortColumn)
+    : undefined;
+  const order: SortOrder = sp.order === "asc" ? "asc" : "desc";
 
   const [{ rows, total }, t, tc, tn, tr, locale] = await Promise.all([
-    listDonations({ q, from, to, page, pageSize: PAGE_SIZE }),
+    listDonations({ q, from, to, page, pageSize: PAGE_SIZE, sort, order }),
     getTranslations("donation"),
     getTranslations("common"),
     getTranslations("nav"),
@@ -43,14 +109,49 @@ export default async function DonationsPage({
   const canDelete = can(user.role, "donation:delete");
   const canReceipt = can(user.role, "donation:receipt");
 
+  /** Build a URL preserving all current params but changing sort/order/page */
+  const sortHref = (col: SortColumn) => {
+    const u = new URLSearchParams();
+    if (q) u.set("q", q);
+    if (from) u.set("from", from);
+    if (to) u.set("to", to);
+    u.set("page", "1");
+    u.set("sort", col);
+    // Toggle direction if already sorted on this col, otherwise default to asc
+    u.set("order", sort === col && order === "asc" ? "desc" : "asc");
+    return `/donations?${u}`;
+  };
+
   const hrefFor = (p: number) => {
     const u = new URLSearchParams();
     if (q) u.set("q", q);
     if (from) u.set("from", from);
     if (to) u.set("to", to);
+    if (sort) u.set("sort", sort);
+    if (sort) u.set("order", order);
     u.set("page", String(p));
     return `/donations?${u}`;
   };
+
+  const SortTh = ({
+    col,
+    className,
+    children,
+  }: {
+    col: SortColumn;
+    className?: string;
+    children: React.ReactNode;
+  }) => (
+    <th className={`px-3 py-2 ${className ?? ""}`}>
+      <Link
+        href={sortHref(col)}
+        className="inline-flex items-center gap-0.5 hover:text-amber-800"
+      >
+        {children}
+        <SortIcon active={sort === col} order={order} />
+      </Link>
+    </th>
+  );
 
   return (
     <div>
@@ -88,11 +189,13 @@ export default async function DonationsPage({
             <table className="w-full text-left text-sm">
               <thead className="border-b border-stone-200 bg-stone-50 text-stone-600">
                 <tr>
-                  <th className="px-3 py-2">{t("date")}</th>
-                  <th className="px-3 py-2">{t("name")}</th>
+                  <SortTh col="donationDate">{t("date")}</SortTh>
+                  <SortTh col="donorName">{t("name")}</SortTh>
                   <th className="px-3 py-2">{t("phone")}</th>
-                  <th className="px-3 py-2">{t("address")}</th>
-                  <th className="px-3 py-2 text-right">{t("amount")}</th>
+                  <SortTh col="address">{t("address")}</SortTh>
+                  <SortTh col="amount" className="text-right">
+                    {t("amount")}
+                  </SortTh>
                   <th className="px-3 py-2">{t("remarks")}</th>
                   <th className="px-3 py-2">{t("addedBy")}</th>
                   {(canEdit || canDelete || canReceipt) && (

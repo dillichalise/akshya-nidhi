@@ -2,9 +2,20 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { donations } from "@/db/schema";
 import { setupTestDb } from "@/test/db";
 import { todayInNepal } from "@/lib/format";
-import { createDonation, getDonationForReceipt, listDonations, softDeleteDonation, updateDonation } from "./donations";
+import {
+  createDonation,
+  getDonationForReceipt,
+  listDonations,
+  softDeleteDonation,
+  updateDonation,
+} from "./donations";
 import { getReport, getTopDonors, getTotals } from "./reports";
-import { countOtherActiveSuperAdmins, createUser, findUserForLogin, getUserById } from "./users";
+import {
+  countOtherActiveSuperAdmins,
+  createUser,
+  findUserForLogin,
+  getUserById,
+} from "./users";
 
 let userId: string;
 const today = todayInNepal();
@@ -25,20 +36,60 @@ const donation = (over: Partial<Parameters<typeof createDonation>[0]>) => ({
 
 beforeAll(async () => {
   await setupTestDb();
-  userId = (await createUser({ username: "root", fullName: "Root", passwordHash: "x", role: "super_admin" })).id;
+  userId = (
+    await createUser({
+      username: "root",
+      fullName: "Root",
+      phone: "9800000001",
+      passwordHash: "x",
+      role: "super_admin",
+    })
+  ).id;
 
   await createDonation(donation({ amount: "1000.50" }), userId); // Ram today
-  await createDonation(donation({ amount: "2000", donationDate: d(1), address: "Old Address" }), userId); // Ram yesterday
-  await createDonation(donation({ donorName: "ram sharma", amount: "500" }), userId); // same donor, different case
-  await createDonation(donation({ donorName: "Ram Sharma", phone: "9800000000", amount: "50000" }), userId); // different person, same name
-  await createDonation(donation({ donorName: "Sita Karki", phone: "9811111111", amount: "7000", donationDate: d(5) }), userId);
-  const deleted = await createDonation(donation({ donorName: "Deleted Donor", phone: "9899999999", amount: "999999" }), userId);
+  await createDonation(
+    donation({ amount: "2000", donationDate: d(1), address: "Old Address" }),
+    userId,
+  ); // Ram yesterday
+  await createDonation(
+    donation({ donorName: "ram sharma", amount: "500" }),
+    userId,
+  ); // same donor, different case
+  await createDonation(
+    donation({ donorName: "Ram Sharma", phone: "9800000000", amount: "50000" }),
+    userId,
+  ); // different person, same name
+  await createDonation(
+    donation({
+      donorName: "Sita Karki",
+      phone: "9811111111",
+      amount: "7000",
+      donationDate: d(5),
+    }),
+    userId,
+  );
+  const deleted = await createDonation(
+    donation({
+      donorName: "Deleted Donor",
+      phone: "9899999999",
+      amount: "999999",
+    }),
+    userId,
+  );
   await softDeleteDonation(deleted.id);
 });
 
 describe("users", () => {
   it("stores usernames lowercase-only and never returns the hash from getUserById", async () => {
-    await expect(createUser({ username: "Mixed", fullName: "X", passwordHash: "x", role: "user" })).rejects.toThrow();
+    await expect(
+      createUser({
+        username: "Mixed",
+        fullName: "X",
+        phone: "",
+        passwordHash: "x",
+        role: "user",
+      }),
+    ).rejects.toThrow();
     const u = await getUserById(userId);
     expect(u).not.toHaveProperty("passwordHash");
     expect((await findUserForLogin("root"))?.passwordHash).toBe("x");
@@ -50,7 +101,9 @@ describe("users", () => {
 
 describe("donations", () => {
   it("rejects non-positive amounts at the database level", async () => {
-    await expect(createDonation(donation({ amount: "0" }), userId)).rejects.toThrow();
+    await expect(
+      createDonation(donation({ amount: "0" }), userId),
+    ).rejects.toThrow();
   });
   it("excludes soft-deleted rows from lists", async () => {
     const { rows, total } = await listDonations({ page: 1, pageSize: 50 });
@@ -58,21 +111,34 @@ describe("donations", () => {
     expect(total).toBe(5);
   });
   it("searches by name or phone", async () => {
-    expect((await listDonations({ q: "sita", page: 1, pageSize: 10 })).total).toBe(1);
-    expect((await listDonations({ q: "98111", page: 1, pageSize: 10 })).total).toBe(1);
+    expect(
+      (await listDonations({ q: "sita", page: 1, pageSize: 10 })).total,
+    ).toBe(1);
+    expect(
+      (await listDonations({ q: "98111", page: 1, pageSize: 10 })).total,
+    ).toBe(1);
   });
   it("cannot edit a soft-deleted donation", async () => {
     const all = await (await import("@/db")).db().select().from(donations);
     const gone = all.find((r) => r.donorName === "Deleted Donor")!;
     await updateDonation(gone.id, donation({ donorName: "Changed" }));
     const after = await (await import("@/db")).db().select().from(donations);
-    expect(after.find((r) => r.id === gone.id)!.donorName).toBe("Deleted Donor");
+    expect(after.find((r) => r.id === gone.id)!.donorName).toBe(
+      "Deleted Donor",
+    );
   });
   it("fetches a single donation with the recorder's name for its receipt", async () => {
     const all = await (await import("@/db")).db().select().from(donations);
-    const ram = all.find((r) => r.donorName === "Ram Sharma" && r.amount === "1000.50")!;
+    const ram = all.find(
+      (r) => r.donorName === "Ram Sharma" && r.amount === "1000.50",
+    )!;
     const r = await getDonationForReceipt(ram.id);
-    expect(r).toMatchObject({ donorName: "Ram Sharma", amount: "1000.50", createdBy: userId, createdByName: "Root" });
+    expect(r).toMatchObject({
+      donorName: "Ram Sharma",
+      amount: "1000.50",
+      createdBy: userId,
+      createdByName: "Root",
+    });
   });
   it("does not return a receipt for a soft-deleted donation", async () => {
     const all = await (await import("@/db")).db().select().from(donations);

@@ -23,11 +23,21 @@ export const users = pgTable(
     fullName: text("full_name").notNull(),
     passwordHash: text("password_hash").notNull(),
     role: userRole("role").notNull(),
+    phone: text("phone").notNull().default(""),
     isActive: boolean("is_active").notNull().default(true),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
-  (t) => [check("users_username_lowercase", sql`${t.username} = lower(${t.username})`)],
+  (t) => [
+    check(
+      "users_username_lowercase",
+      sql`${t.username} = lower(${t.username})`,
+    ),
+  ],
 );
 
 export const donations = pgTable(
@@ -42,11 +52,15 @@ export const donations = pgTable(
     amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
     donationDate: date("donation_date").notNull(),
     remarks: text("remarks"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     createdBy: uuid("created_by")
       .notNull()
       .references(() => users.id),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     // Soft delete: NULL = active.
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },

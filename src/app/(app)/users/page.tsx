@@ -34,6 +34,7 @@ export default async function UsersPage() {
             <tr>
               <th className="px-3 py-2">{t("fullName")}</th>
               <th className="px-3 py-2">{t("username")}</th>
+              <th className="px-3 py-2">{t("phone")}</th>
               <th className="px-3 py-2">{t("role")}</th>
               <th className="px-3 py-2">{t("status")}</th>
               <th className="px-3 py-2">{t("createdAt")}</th>
@@ -45,9 +46,23 @@ export default async function UsersPage() {
               <tr key={u.id}>
                 <td className="px-3 py-2 font-medium">{u.fullName}</td>
                 <td className="px-3 py-2">{u.username}</td>
+                <td className="whitespace-nowrap px-3 py-2">
+                  {u.phone ? (
+                    <a
+                      href={`tel:${u.phone}`}
+                      className="text-amber-700 underline underline-offset-2 hover:text-amber-900"
+                    >
+                      {u.phone}
+                    </a>
+                  ) : (
+                    <span className="text-stone-400">—</span>
+                  )}
+                </td>
                 <td className="px-3 py-2">{t(`roles.${u.role}`)}</td>
                 <td className="px-3 py-2">
-                  <span className={u.isActive ? "text-green-700" : "text-stone-400"}>
+                  <span
+                    className={u.isActive ? "text-green-700" : "text-stone-400"}
+                  >
                     {u.isActive ? t("active") : t("inactive")}
                   </span>
                 </td>
@@ -56,7 +71,10 @@ export default async function UsersPage() {
                 </td>
                 {canManage && (
                   <td className="px-3 py-2">
-                    <Link href={`/users/${u.id}`} className={btnGhost + " !min-h-9 !px-3 !py-1 text-sm"}>
+                    <Link
+                      href={`/users/${u.id}`}
+                      className={btnGhost + " !min-h-9 !px-3 !py-1 text-sm"}
+                    >
                       {tc("edit")}
                     </Link>
                   </td>

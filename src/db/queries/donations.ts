@@ -1,5 +1,17 @@
 import "server-only";
-import { and, desc, eq, gte, ilike, isNull, lte, or, count, type SQL } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  ilike,
+  isNull,
+  lte,
+  or,
+  count,
+  type SQL,
+} from "drizzle-orm";
 import { db } from "@/db";
 import { donations, users } from "@/db/schema";
 import type { DonationInput } from "@/lib/validation/donation";
@@ -59,17 +71,52 @@ export async function softDeleteDonation(id: string) {
     .where(and(eq(donations.id, id), activeDonations));
 }
 
-export type DonationFilters = { q?: string; from?: string; to?: string; page: number; pageSize: number };
+export type SortColumn = "donationDate" | "donorName" | "address" | "amount";
+export type SortOrder = "asc" | "desc";
 
-export async function listDonations({ q, from, to, page, pageSize }: DonationFilters) {
+export type DonationFilters = {
+  q?: string;
+  from?: string;
+  to?: string;
+  page: number;
+  pageSize: number;
+  sort?: SortColumn;
+  order?: SortOrder;
+};
+
+export async function listDonations({
+  q,
+  from,
+  to,
+  page,
+  pageSize,
+  sort,
+  order,
+}: DonationFilters) {
   const conds: SQL[] = [activeDonations];
   if (q) {
     const like = `%${q.replace(/[%_\\]/g, "\\$&")}%`;
-    conds.push(or(ilike(donations.donorName, like), ilike(donations.phone, like))!);
+    conds.push(
+      or(ilike(donations.donorName, like), ilike(donations.phone, like))!,
+    );
   }
   if (from) conds.push(gte(donations.donationDate, from));
   if (to) conds.push(lte(donations.donationDate, to));
   const where = and(...conds);
+
+  // Build ORDER BY: primary sort on the requested column, secondary always createdAt DESC.
+  const dir = order === "asc" ? asc : desc;
+  const colMap = {
+    donationDate: donations.donationDate,
+    donorName: donations.donorName,
+    address: donations.address,
+    amount: donations.amount,
+  } as const;
+  const primarySort = sort ? dir(colMap[sort]) : desc(donations.createdAt);
+  const orderBy =
+    sort && sort !== "donationDate"
+      ? [primarySort, desc(donations.createdAt)]
+      : [primarySort];
 
   const [rows, [total]] = await Promise.all([
     db()
@@ -87,7 +134,7 @@ export async function listDonations({ q, from, to, page, pageSize }: DonationFil
       .from(donations)
       .leftJoin(users, eq(users.id, donations.createdBy))
       .where(where)
-      .orderBy(desc(donations.createdAt))
+      .orderBy(...orderBy)
       .limit(pageSize)
       .offset((page - 1) * pageSize),
     db().select({ n: count() }).from(donations).where(where),
