@@ -99,7 +99,7 @@
     "thanks": "Thank you for your generous support.",
     "issuedBy": "Issued by {name}",
     "generatedOn": "Generated on {when}",
-    "footerNote": "This is a computer-generated receipt and does not require a signature.",
+    "footerNote": "This is a computer-generated receipt.",
     "download": "Download",
     "print": "Print",
     "previewTitle": "Receipt Preview",

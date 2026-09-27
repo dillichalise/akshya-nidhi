@@ -88,7 +88,7 @@ export function ReceiptPreviewModal({
       className="m-auto w-[calc(100%-2rem)] max-w-3xl rounded-xl border-0 bg-transparent p-0 shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-sm"
     >
       <div
-        className="flex max-h-[90dvh] flex-col overflow-hidden rounded-xl bg-white"
+        className="flex h-[90dvh] max-h-[90dvh] flex-col overflow-hidden rounded-xl bg-white"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -120,10 +120,7 @@ export function ReceiptPreviewModal({
         </div>
 
         {/* PDF preview area */}
-        <div
-          className="relative min-h-0 flex-1 bg-stone-100"
-          style={{ minHeight: "50dvh" }}
-        >
+        <div className="relative min-h-0 flex-1 bg-stone-100">
           {(loadState === "idle" || loadState === "loading") && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-stone-500">
               <svg
