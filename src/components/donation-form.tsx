@@ -35,9 +35,9 @@ export function DonationForm({
 
   // Live amount state.
   // rawAmount  — plain numeric string (digits + optional dot), used for validation/submit.
-  // dispAmount — comma-grouped display string shown in the visible input.
+  // displayAmount — comma-grouped display string shown in the visible input.
   const [rawAmount, setRawAmount] = useState(v.amount ?? "");
-  const [dispAmount, setDispAmount] = useState(
+  const [displayAmount, setDisplayAmount] = useState(
     v.amount ? formatAmountInput(v.amount) : "",
   );
 
@@ -54,7 +54,7 @@ export function DonationForm({
       setSavedDate(v.donationDate ?? "");
       setReceiptOpen(true);
       setRawAmount("");
-      setDispAmount("");
+      setDisplayAmount("");
       // Focus will move to the name field once the modal is closed
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -252,7 +252,7 @@ export function DonationForm({
               <input
                 id="amount"
                 inputMode="decimal"
-                value={dispAmount}
+                value={displayAmount}
                 autoComplete="off"
                 aria-invalid={!!state.errors.amount}
                 aria-describedby="amount-error"
@@ -265,7 +265,7 @@ export function DonationForm({
                 onChange={(e) => {
                   const raw = e.target.value.replace(/,/g, "");
                   setRawAmount(raw);
-                  setDispAmount(formatAmountInput(raw));
+                  setDisplayAmount(formatAmountInput(raw));
                 }}
                 onKeyDown={(e) => {
                   // Allow digits, a single decimal point, and control keys
@@ -283,12 +283,6 @@ export function DonationForm({
               />
             </div>
 
-            {/* Live formatted preview (with currency prefix + 2dp) */}
-            {formattedAmount && (
-              <p className="mt-1 text-sm font-medium tabular-nums text-stone-700">
-                {formattedAmount}
-              </p>
-            )}
             {wordsAmount && (
               <p className="mt-0.5 text-xs text-stone-500">{wordsAmount}</p>
             )}

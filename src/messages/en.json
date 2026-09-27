@@ -52,7 +52,7 @@
     "name": "Donor name",
     "address": "Address",
     "phone": "Phone number",
-    "amount": "Amount (NPR)",
+    "amount": "Amount",
     "date": "Donation date",
     "remarks": "Remarks",
     "addedBy": "Added by",
