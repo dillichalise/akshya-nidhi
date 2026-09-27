@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { btnGhost, btnPrimary } from "./ui";
 
+type LoadState = "idle" | "loading" | "ready" | "error";
+
 export function ReceiptPreviewButton({
   receiptUrl,
   fileName,
@@ -12,8 +14,34 @@ export function ReceiptPreviewButton({
 }) {
   const t = useTranslations("receipt");
   const [open, setOpen] = useState(false);
+  const [loadState, setLoadState] = useState<LoadState>("idle");
+  // Blob URL so the iframe can display the PDF regardless of Content-Disposition header
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+
+  // Fetch PDF as blob the first time the modal opens
+  useEffect(() => {
+    if (!open || blobUrl || loadState === "loading") return;
+    setLoadState("loading");
+    fetch(receiptUrl)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.blob();
+      })
+      .then((blob) => {
+        setBlobUrl(URL.createObjectURL(blob));
+        setLoadState("ready");
+      })
+      .catch(() => setLoadState("error"));
+  }, [open, blobUrl, loadState, receiptUrl]);
+
+  // Revoke the blob URL when the component unmounts to free memory
+  useEffect(() => {
+    return () => {
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [blobUrl]);
 
   // Open/close the native <dialog>
   useEffect(() => {
@@ -27,11 +55,14 @@ export function ReceiptPreviewButton({
   }, [open]);
 
   // Close on backdrop click (click outside the inner panel)
-  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) setOpen(false);
-  }, []);
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent<HTMLDialogElement>) => {
+      if (e.target === dialogRef.current) setOpen(false);
+    },
+    [],
+  );
 
-  // Close on Escape (already handled by <dialog> natively, but sync state)
+  // Sync state when Escape closes the dialog natively
   const handleClose = useCallback(() => setOpen(false), []);
 
   const handlePrint = () => {
@@ -74,14 +105,14 @@ export function ReceiptPreviewButton({
         </span>
       </button>
 
-      {/* Native <dialog> modal — rendered in-place, portalled by the browser */}
+      {/* Native <dialog> modal */}
       <dialog
         ref={dialogRef}
         onClose={handleClose}
         onClick={handleBackdropClick}
         className="m-auto w-full max-w-3xl rounded-xl border-0 bg-transparent p-0 shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-sm"
       >
-        {/* Inner panel — clicks here don't bubble to the backdrop handler */}
+        {/* Inner panel — stop clicks bubbling to backdrop handler */}
         <div
           className="flex flex-col overflow-hidden rounded-xl bg-white"
           onClick={(e) => e.stopPropagation()}
@@ -114,12 +145,63 @@ export function ReceiptPreviewButton({
             </button>
           </div>
 
-          {/* PDF iframe */}
-          <div className="h-[70vh] w-full bg-stone-100">
-            {open && (
+          {/* PDF preview area */}
+          <div className="relative h-[72vh] w-full bg-stone-100">
+            {(loadState === "idle" || loadState === "loading") && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-stone-500">
+                {/* Spinner */}
+                <svg
+                  className="h-8 w-8 animate-spin text-amber-700"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4l3-3-3-3V0a12 12 0 00-12 12h4z"
+                  />
+                </svg>
+                <span className="text-sm">Loading…</span>
+              </div>
+            )}
+
+            {loadState === "error" && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-red-600">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <p className="text-sm">
+                  Could not load receipt. Use Download instead.
+                </p>
+              </div>
+            )}
+
+            {loadState === "ready" && blobUrl && (
               <iframe
                 ref={iframeRef}
-                src={receiptUrl}
+                src={blobUrl}
                 title={t("previewTitle")}
                 className="h-full w-full border-0"
               />
@@ -131,9 +213,9 @@ export function ReceiptPreviewButton({
             <button
               type="button"
               onClick={handlePrint}
-              className={btnGhost + " gap-2"}
+              disabled={loadState !== "ready"}
+              className={btnGhost + " gap-2 disabled:opacity-50"}
             >
-              {/* Printer icon */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-4 w-4"
@@ -156,7 +238,6 @@ export function ReceiptPreviewButton({
               download={fileName}
               className={btnPrimary + " gap-2"}
             >
-              {/* Download icon */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-4 w-4"
