@@ -61,10 +61,9 @@ const s = StyleSheet.create({
   amountLabel: { fontSize: 11, color: "#78350f", fontWeight: 700 },
   amountValue: { fontSize: 20, fontWeight: 700, color: "#78350f" },
   amountWords: {
-    marginTop: 4,
+    marginTop: 5,
     fontSize: 9,
     color: "#92400e",
-    fontStyle: "italic",
   },
   thanks: {
     marginTop: 26,
