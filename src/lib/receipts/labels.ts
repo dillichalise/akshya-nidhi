@@ -1,6 +1,6 @@
 import "server-only";
 import { getLocale, getTranslations } from "next-intl/server";
-import { formatDateTime } from "@/lib/format";
+import { amountInWords, formatDateTime } from "@/lib/format";
 import { receiptNumber, type ReceiptLabels, type ReceiptRow } from "./shared";
 
 /** Receipt labels in the current locale (from the locale cookie). */
@@ -22,6 +22,7 @@ export async function getReceiptLabels(donation: ReceiptRow) {
     phone: td("phone"),
     address: td("address"),
     amount: td("amount"),
+    amountInWords: amountInWords(donation.amount, locale),
     date: td("date"),
     remarks: td("remarks"),
     issuedBy: t("issuedBy", { name: donation.createdByName ?? "" }),

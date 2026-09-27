@@ -20,6 +20,7 @@ export type ReceiptLabels = {
   phone: string;
   address: string;
   amount: string;
+  amountInWords: string;
   date: string;
   remarks: string;
   issuedBy: string;
@@ -32,6 +33,9 @@ export function receiptNumber(donationId: string): string {
   return donationId.slice(0, 8).toUpperCase();
 }
 
-export function receiptFileName(donation: { id: string; donationDate: string }): string {
+export function receiptFileName(donation: {
+  id: string;
+  donationDate: string;
+}): string {
   return `receipt_${donation.donationDate}_${receiptNumber(donation.id)}`;
 }

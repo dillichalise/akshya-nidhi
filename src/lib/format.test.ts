@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, formatDateTime, formatNPR, todayInNepal, toNepaliDigits } from "./format";
+import {
+  formatDate,
+  formatDateTime,
+  formatNPR,
+  todayInNepal,
+  toNepaliDigits,
+} from "./format";
 
 describe("formatNPR", () => {
   it("uses lakh/crore grouping, Western digits by default", () => {
@@ -8,7 +14,7 @@ describe("formatNPR", () => {
     expect(formatNPR("0")).toBe("Rs 0.00");
   });
   it("uses Devanagari digits for the `ne` locale, same grouping", () => {
-    expect(formatNPR("125000", "ne")).toBe("Rs १,२५,०००.००");
+    expect(formatNPR("125000", "ne")).toBe("रु १,२५,०००.००");
   });
 });
 
@@ -46,9 +52,13 @@ describe("formatDate", () => {
 describe("formatDateTime", () => {
   it("appends 12-hour Kathmandu time for `en`", () => {
     // Exactly Nepal midnight -> Aswin 11, 2083 (see todayInNepal test above).
-    expect(formatDateTime(new Date("2026-09-26T18:15:00Z"))).toBe("11 Aswin 2083, 12:00 AM");
+    expect(formatDateTime(new Date("2026-09-26T18:15:00Z"))).toBe(
+      "11 Aswin 2083, 12:00 AM",
+    );
   });
   it("appends 24-hour Kathmandu time in Devanagari for `ne`", () => {
-    expect(formatDateTime(new Date("2026-09-26T18:15:00Z"), "ne")).toBe("११ आश्विन २०८३, ००:००");
+    expect(formatDateTime(new Date("2026-09-26T18:15:00Z"), "ne")).toBe(
+      "११ आश्विन २०८३, ००:००",
+    );
   });
 });

@@ -1,5 +1,12 @@
 import "server-only";
-import { Document, Page, renderToBuffer, StyleSheet, Text, View } from "@react-pdf/renderer";
+import {
+  Document,
+  Page,
+  renderToBuffer,
+  StyleSheet,
+  Text,
+  View,
+} from "@react-pdf/renderer";
 import { formatDate, formatNPR } from "@/lib/format";
 import { MixedText as T, registerPdfFonts } from "@/lib/pdf/shared";
 import type { ReceiptLabels, ReceiptRow } from "./shared";
@@ -7,7 +14,12 @@ import type { ReceiptLabels, ReceiptRow } from "./shared";
 registerPdfFonts();
 
 const s = StyleSheet.create({
-  page: { padding: 40, fontFamily: "NotoLatin", fontSize: 11, color: "#1c1917" },
+  page: {
+    padding: 40,
+    fontFamily: "NotoLatin",
+    fontSize: 11,
+    color: "#1c1917",
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -21,8 +33,17 @@ const s = StyleSheet.create({
   metaBlock: { alignItems: "flex-end" },
   receiptTitle: { fontSize: 13, fontWeight: 700 },
   metaLine: { marginTop: 2, fontSize: 9, color: "#57534e" },
-  sectionTitle: { marginBottom: 8, fontSize: 11, fontWeight: 700, color: "#57534e" },
-  row: { flexDirection: "row", paddingVertical: 7, borderBottom: "0.5pt solid #e7e5e4" },
+  sectionTitle: {
+    marginBottom: 8,
+    fontSize: 11,
+    fontWeight: 700,
+    color: "#57534e",
+  },
+  row: {
+    flexDirection: "row",
+    paddingVertical: 7,
+    borderBottom: "0.5pt solid #e7e5e4",
+  },
   label: { width: 130, color: "#78716c" },
   value: { flex: 1, fontWeight: 700 },
   amountBox: {
@@ -30,16 +51,38 @@ const s = StyleSheet.create({
     padding: 14,
     borderRadius: 6,
     backgroundColor: "#fef3c7",
-    flexDirection: "row",
+    flexDirection: "column" as const,
+  },
+  amountBoxRow: {
+    flexDirection: "row" as const,
     justifyContent: "space-between",
     alignItems: "center",
   },
   amountLabel: { fontSize: 11, color: "#78350f", fontWeight: 700 },
   amountValue: { fontSize: 20, fontWeight: 700, color: "#78350f" },
-  thanks: { marginTop: 26, fontSize: 10, color: "#57534e", textAlign: "center" },
+  amountWords: {
+    marginTop: 4,
+    fontSize: 9,
+    color: "#92400e",
+    fontStyle: "italic",
+  },
+  thanks: {
+    marginTop: 26,
+    fontSize: 10,
+    color: "#57534e",
+    textAlign: "center",
+  },
   signOff: { marginTop: 40, flexDirection: "row", justifyContent: "flex-end" },
   signOffText: { fontSize: 9, color: "#57534e", textAlign: "right" },
-  footer: { position: "absolute", bottom: 24, left: 40, right: 40, fontSize: 8, color: "#a8a29e", textAlign: "center" },
+  footer: {
+    position: "absolute",
+    bottom: 24,
+    left: 40,
+    right: 40,
+    fontSize: 8,
+    color: "#a8a29e",
+    textAlign: "center",
+  },
 });
 
 function Row({ label, children }: { label: string; children: string }) {
@@ -55,7 +98,15 @@ function Row({ label, children }: { label: string; children: string }) {
   );
 }
 
-function ReceiptDocument({ data, labels, locale }: { data: ReceiptRow; labels: ReceiptLabels; locale: string }) {
+function ReceiptDocument({
+  data,
+  labels,
+  locale,
+}: {
+  data: ReceiptRow;
+  labels: ReceiptLabels;
+  locale: string;
+}) {
   return (
     <Document title={labels.title}>
       <Page size="A4" style={s.page}>
@@ -93,12 +144,19 @@ function ReceiptDocument({ data, labels, locale }: { data: ReceiptRow; labels: R
         </View>
 
         <View style={s.amountBox}>
-          <Text style={s.amountLabel}>
-            <T>{labels.amount}</T>
-          </Text>
-          <Text style={s.amountValue}>
-            <T>{formatNPR(data.amount, locale)}</T>
-          </Text>
+          <View style={s.amountBoxRow}>
+            <Text style={s.amountLabel}>
+              <T>{labels.amount}</T>
+            </Text>
+            <Text style={s.amountValue}>
+              <T>{formatNPR(data.amount, locale)}</T>
+            </Text>
+          </View>
+          {labels.amountInWords ? (
+            <Text style={s.amountWords}>
+              <T>{labels.amountInWords}</T>
+            </Text>
+          ) : null}
         </View>
 
         <Text style={s.thanks}>
@@ -124,6 +182,12 @@ function ReceiptDocument({ data, labels, locale }: { data: ReceiptRow; labels: R
   );
 }
 
-export function buildReceiptPdf(data: ReceiptRow, labels: ReceiptLabels, locale: string): Promise<Buffer> {
-  return renderToBuffer(<ReceiptDocument data={data} labels={labels} locale={locale} />);
+export function buildReceiptPdf(
+  data: ReceiptRow,
+  labels: ReceiptLabels,
+  locale: string,
+): Promise<Buffer> {
+  return renderToBuffer(
+    <ReceiptDocument data={data} labels={labels} locale={locale} />,
+  );
 }

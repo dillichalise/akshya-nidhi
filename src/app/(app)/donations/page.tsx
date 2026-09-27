@@ -4,7 +4,7 @@ import { deleteDonationAction } from "@/actions/donations";
 import { DonationFilters } from "@/components/donation-filters";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { Pagination } from "@/components/pagination";
-import { btnGhost, btnPrimary, Card, PageTitle } from "@/components/ui";
+import { btnPrimary, Card, PageTitle } from "@/components/ui";
 import { listDonations } from "@/db/queries/donations";
 import { can } from "@/lib/auth/permissions";
 import { requirePermission } from "@/lib/auth/session";
@@ -16,7 +16,12 @@ const ymd = /^\d{4}-\d{2}-\d{2}$/;
 export default async function DonationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; from?: string; to?: string; page?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    from?: string;
+    to?: string;
+    page?: string;
+  }>;
 }) {
   const user = await requirePermission("donation:list");
   const sp = await searchParams;
@@ -60,10 +65,17 @@ export default async function DonationsPage({
       </PageTitle>
 
       <Card className="mb-4">
-        <DonationFilters key={`${q ?? ""}|${from ?? ""}|${to ?? ""}`} q={q ?? ""} from={from ?? ""} to={to ?? ""} />
+        <DonationFilters
+          key={`${q ?? ""}|${from ?? ""}|${to ?? ""}`}
+          q={q ?? ""}
+          from={from ?? ""}
+          to={to ?? ""}
+        />
       </Card>
 
-      <p className="mb-2 text-sm text-stone-600">{tc("records", { count: localizedCount(total, locale) })}</p>
+      <p className="mb-2 text-sm text-stone-600">
+        {tc("records", { count: localizedCount(total, locale) })}
+      </p>
 
       {rows.length === 0 ? (
         <Card>
@@ -83,39 +95,110 @@ export default async function DonationsPage({
                   <th className="px-3 py-2 text-right">{t("amount")}</th>
                   <th className="px-3 py-2">{t("remarks")}</th>
                   <th className="px-3 py-2">{t("addedBy")}</th>
-                  {(canEdit || canDelete || canReceipt) && <th className="px-3 py-2">{tc("actions")}</th>}
+                  {(canEdit || canDelete || canReceipt) && (
+                    <th className="px-3 py-2">{tc("actions")}</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
                 {rows.map((r) => (
                   <tr key={r.id} className="align-top">
-                    <td className="whitespace-nowrap px-3 py-2">{formatDate(r.donationDate, locale)}</td>
+                    <td className="whitespace-nowrap px-3 py-2">
+                      {formatDate(r.donationDate, locale)}
+                    </td>
                     <td className="px-3 py-2 font-medium">{r.donorName}</td>
-                    <td className="whitespace-nowrap px-3 py-2">{r.phone}</td>
+                    <td className="whitespace-nowrap px-3 py-2">
+                      <a
+                        href={`tel:${r.phone}`}
+                        className="text-amber-700 underline underline-offset-2 hover:text-amber-900"
+                      >
+                        {r.phone}
+                      </a>
+                    </td>
                     <td className="px-3 py-2">{r.address}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatNPR(r.amount, locale)}</td>
-                    <td className="max-w-48 px-3 py-2 text-stone-600">{r.remarks}</td>
-                    <td className="px-3 py-2 text-stone-600">{r.createdByName}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
+                      {formatNPR(r.amount, locale)}
+                    </td>
+                    <td className="max-w-48 px-3 py-2 text-stone-600">
+                      {r.remarks}
+                    </td>
+                    <td className="px-3 py-2 text-stone-600">
+                      {r.createdByName}
+                    </td>
                     {(canEdit || canDelete || canReceipt) && (
                       <td className="whitespace-nowrap px-3 py-2">
-                        <div className="flex gap-2">
+                        <div className="flex gap-1">
                           {canReceipt && (
                             <a
                               href={`/api/donations/${r.id}/receipt`}
-                              className={btnGhost + " !min-h-9 !px-3 !py-1 text-sm"}
+                              title={tr("linkLabel")}
+                              aria-label={tr("linkLabel")}
+                              className="group relative inline-flex h-8 w-8 items-center justify-center rounded-lg border border-stone-300 bg-white text-stone-600 hover:bg-stone-50 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-600/30"
                             >
-                              {tr("linkLabel")}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                                <polyline points="10 9 9 9 8 9" />
+                              </svg>
+                              <span
+                                className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-stone-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+                                role="tooltip"
+                              >
+                                {tr("linkLabel")}
+                              </span>
                             </a>
                           )}
                           {canEdit && (
-                            <Link href={`/donations/${r.id}/edit`} className={btnGhost + " !min-h-9 !px-3 !py-1 text-sm"}>
-                              {tc("edit")}
+                            <Link
+                              href={`/donations/${r.id}/edit`}
+                              title={tc("edit")}
+                              aria-label={tc("edit")}
+                              className="group relative inline-flex h-8 w-8 items-center justify-center rounded-lg border border-stone-300 bg-white text-stone-600 hover:bg-stone-50 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-600/30"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                              </svg>
+                              <span
+                                className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-stone-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+                                role="tooltip"
+                              >
+                                {tc("edit")}
+                              </span>
                             </Link>
                           )}
                           {canDelete && (
-                            <form action={deleteDonationAction}>
+                            <form
+                              action={deleteDonationAction}
+                              className="relative"
+                            >
                               <input type="hidden" name="id" value={r.id} />
-                              <ConfirmDeleteButton />
+                              <ConfirmDeleteButton
+                                iconOnly
+                                tooltip={tc("delete")}
+                              />
                             </form>
                           )}
                         </div>
@@ -130,36 +213,89 @@ export default async function DonationsPage({
           {/* Cards on phones */}
           <ul className="space-y-3 md:hidden">
             {rows.map((r) => (
-              <li key={r.id} className="rounded-xl border border-stone-200 bg-white p-4">
+              <li
+                key={r.id}
+                className="rounded-xl border border-stone-200 bg-white p-4"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="font-medium">{r.donorName}</div>
                     <div className="text-sm text-stone-600">
-                      {r.phone} · {r.address}
+                      <a
+                        href={`tel:${r.phone}`}
+                        className="text-amber-700 underline underline-offset-2 hover:text-amber-900"
+                      >
+                        {r.phone}
+                      </a>
+                      {" · "}
+                      {r.address}
                     </div>
                   </div>
-                  <div className="text-right font-semibold tabular-nums">{formatNPR(r.amount, locale)}</div>
+                  <div className="text-right font-semibold tabular-nums">
+                    {formatNPR(r.amount, locale)}
+                  </div>
                 </div>
                 <div className="mt-1 text-sm text-stone-500">
                   {formatDate(r.donationDate, locale)} · {r.createdByName}
                 </div>
-                {r.remarks && <div className="mt-1 text-sm text-stone-600">{r.remarks}</div>}
+                {r.remarks && (
+                  <div className="mt-1 text-sm text-stone-600">{r.remarks}</div>
+                )}
                 {(canEdit || canDelete || canReceipt) && (
-                  <div className="mt-3 flex gap-2">
+                  <div className="mt-3 flex gap-1">
                     {canReceipt && (
-                      <a href={`/api/donations/${r.id}/receipt`} className={btnGhost + " !min-h-9 !px-3 !py-1 text-sm"}>
-                        {tr("linkLabel")}
+                      <a
+                        href={`/api/donations/${r.id}/receipt`}
+                        title={tr("linkLabel")}
+                        aria-label={tr("linkLabel")}
+                        className="group relative inline-flex h-8 w-8 items-center justify-center rounded-lg border border-stone-300 bg-white text-stone-600 hover:bg-stone-50 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-600/30"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                          <line x1="16" y1="13" x2="8" y2="13" />
+                          <line x1="16" y1="17" x2="8" y2="17" />
+                          <polyline points="10 9 9 9 8 9" />
+                        </svg>
                       </a>
                     )}
                     {canEdit && (
-                      <Link href={`/donations/${r.id}/edit`} className={btnGhost + " !min-h-9 !px-3 !py-1 text-sm"}>
-                        {tc("edit")}
+                      <Link
+                        href={`/donations/${r.id}/edit`}
+                        title={tc("edit")}
+                        aria-label={tc("edit")}
+                        className="group relative inline-flex h-8 w-8 items-center justify-center rounded-lg border border-stone-300 bg-white text-stone-600 hover:bg-stone-50 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-600/30"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
                       </Link>
                     )}
                     {canDelete && (
                       <form action={deleteDonationAction}>
                         <input type="hidden" name="id" value={r.id} />
-                        <ConfirmDeleteButton />
+                        <ConfirmDeleteButton iconOnly tooltip={tc("delete")} />
                       </form>
                     )}
                   </div>
