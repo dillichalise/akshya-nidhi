@@ -75,7 +75,22 @@
     "address": "ठेगाना",
     "amount": "रकम",
     "donations": "{count} दान",
-    "multiple": "{count} पटक दान"
+    "multiple": "{count} पटक दान",
+    "dayOverDay": "आज विरुद्ध हिजो",
+    "today": "आज",
+    "yesterday": "हिजो",
+    "noChange": "कुनै परिवर्तन छैन",
+    "donationsShort": "दान",
+    "eventTarget": "लक्ष्य प्रगति",
+    "eventPeriod": "२३ आश्विन – ०५ कार्तिक २०८३",
+    "targetProgress": "लक्ष्यको {pct}% पुगियो",
+    "targetOf": "{amount} लक्ष्यमध्ये",
+    "remaining": "बाँकी",
+    "avgPerDonation": "प्रति दान औसत",
+    "dailyChart": "दैनिक संकलन (२५ आश्विन – ०३ कार्तिक)",
+    "dailyChartAmount": "प्रतिदिन संकलित रकम",
+    "amountDistribution": "दान आकार विश्लेषण",
+    "amountDistributionDesc": "रकमको आधारमा दान संख्या"
   },
   "reports": {
     "title": "प्रतिवेदन",

@@ -75,7 +75,22 @@
     "address": "Address",
     "amount": "Amount",
     "donations": "{count, plural, one {# donation} other {# donations}}",
-    "multiple": "{count} donations"
+    "multiple": "{count} donations",
+    "dayOverDay": "Today vs Yesterday",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "noChange": "No change",
+    "donationsShort": "donations",
+    "eventTarget": "Event target progress",
+    "eventPeriod": "23 Ashoj – 05 Kartik 2083",
+    "targetProgress": "{pct}% of goal reached",
+    "targetOf": "of {amount} goal",
+    "remaining": "Remaining",
+    "avgPerDonation": "Avg per donation",
+    "dailyChart": "Daily collections (25 Ashoj – 03 Kartik)",
+    "dailyChartAmount": "Amount collected per day",
+    "amountDistribution": "Donation size breakdown",
+    "amountDistributionDesc": "Number of donations by amount bracket"
   },
   "reports": {
     "title": "Reports",
