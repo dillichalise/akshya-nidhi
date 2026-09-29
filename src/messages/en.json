@@ -39,7 +39,7 @@
   },
   "login": {
     "title": "Sign in",
-    "subtitle": "Authorised staff only",
+    "subtitle": "Authorised user only",
     "username": "Username",
     "password": "Password",
     "submit": "Sign in",
