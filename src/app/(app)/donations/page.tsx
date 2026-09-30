@@ -25,6 +25,35 @@ const SORT_COLS = new Set<string>([
   "amount",
 ]);
 
+/** Donation type badge with color coding */
+function DonationTypeBadge({
+  type,
+  locale,
+}: {
+  type: "cash" | "non_cash" | "other";
+  locale: string;
+}) {
+  const colors = {
+    cash: "bg-amber-100 text-amber-800 border-amber-200",
+    non_cash: "bg-blue-100 text-blue-800 border-blue-200",
+    other: "bg-stone-100 text-stone-800 border-stone-200",
+  };
+
+  const labels = {
+    cash: locale === "ne" ? "नगद" : "Cash",
+    non_cash: locale === "ne" ? "वस्तु" : "Non-cash",
+    other: locale === "ne" ? "अन्य" : "Other",
+  };
+
+  return (
+    <span
+      className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${colors[type]}`}
+    >
+      {labels[type]}
+    </span>
+  );
+}
+
 /** Chevron icons for sort direction indicator */
 function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
   if (!active) {
@@ -82,6 +111,9 @@ export default async function DonationsPage({
     q?: string;
     from?: string;
     to?: string;
+    type?: string;
+    minAmt?: string;
+    maxAmt?: string;
     page?: string;
     sort?: string;
     order?: string;
@@ -92,6 +124,19 @@ export default async function DonationsPage({
   const q = sp.q?.trim().slice(0, 100) || undefined;
   const from = sp.from && ymd.test(sp.from) ? sp.from : undefined;
   const to = sp.to && ymd.test(sp.to) ? sp.to : undefined;
+  const donationType =
+    sp.type && ["cash", "non_cash", "other"].includes(sp.type)
+      ? (sp.type as "cash" | "non_cash" | "other")
+      : undefined;
+  const minAmtInput = sp.minAmt ?? "";
+  const maxAmtInput = sp.maxAmt ?? "";
+  const amountFilterPattern = /^[1-9]\d*$/;
+  const amountFilterValid =
+    (!minAmtInput || amountFilterPattern.test(minAmtInput)) &&
+    (!maxAmtInput || amountFilterPattern.test(maxAmtInput)) &&
+    (!minAmtInput || !maxAmtInput || BigInt(maxAmtInput) >= BigInt(minAmtInput));
+  const minAmt = amountFilterValid && minAmtInput ? minAmtInput : undefined;
+  const maxAmt = amountFilterValid && maxAmtInput ? maxAmtInput : undefined;
   const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
   const sort: SortColumn | undefined = SORT_COLS.has(sp.sort ?? "")
     ? (sp.sort as SortColumn)
@@ -99,7 +144,18 @@ export default async function DonationsPage({
   const order: SortOrder = sp.order === "asc" ? "asc" : "desc";
 
   const [{ rows, total }, t, tc, tn, locale] = await Promise.all([
-    listDonations({ q, from, to, page, pageSize: PAGE_SIZE, sort, order }),
+    listDonations({
+      q,
+      from,
+      to,
+      donationType,
+      minAmt,
+      maxAmt,
+      page,
+      pageSize: PAGE_SIZE,
+      sort,
+      order,
+    }),
     getTranslations("donation"),
     getTranslations("common"),
     getTranslations("nav"),
@@ -116,6 +172,9 @@ export default async function DonationsPage({
     if (q) u.set("q", q);
     if (from) u.set("from", from);
     if (to) u.set("to", to);
+    if (donationType) u.set("type", donationType);
+    if (minAmt) u.set("minAmt", minAmt);
+    if (maxAmt) u.set("maxAmt", maxAmt);
     u.set("page", "1");
     u.set("sort", col);
     // Toggle direction if already sorted on this col, otherwise default to asc
@@ -128,6 +187,9 @@ export default async function DonationsPage({
     if (q) u.set("q", q);
     if (from) u.set("from", from);
     if (to) u.set("to", to);
+    if (donationType) u.set("type", donationType);
+    if (minAmt) u.set("minAmt", minAmt);
+    if (maxAmt) u.set("maxAmt", maxAmt);
     if (sort) u.set("sort", sort);
     if (sort) u.set("order", order);
     u.set("page", String(p));
@@ -168,12 +230,23 @@ export default async function DonationsPage({
 
       <Card className="mb-4">
         <DonationFilters
-          key={`${q ?? ""}|${from ?? ""}|${to ?? ""}`}
+          key={`${q ?? ""}|${from ?? ""}|${to ?? ""}|${donationType ?? ""}|${minAmtInput}|${maxAmtInput}`}
           q={q ?? ""}
           from={from ?? ""}
           to={to ?? ""}
+          donationType={donationType ?? ""}
+          minAmt={minAmtInput}
+          maxAmt={maxAmtInput}
         />
       </Card>
+
+      {!amountFilterValid && (
+        <p role="alert" className="mb-3 text-sm text-red-700">
+          {minAmtInput && maxAmtInput && amountFilterPattern.test(minAmtInput) && amountFilterPattern.test(maxAmtInput)
+            ? tc("maxMustBeAtLeastMin")
+            : tc("amountFilterInvalid")}
+        </p>
+      )}
 
       <p className="mb-2 text-sm text-stone-600">
         {tc("records", { count: localizedCount(total, locale) })}
@@ -194,6 +267,7 @@ export default async function DonationsPage({
                   <SortTh col="donorName">{t("name")}</SortTh>
                   <th className="px-3 py-2">{t("phone")}</th>
                   <SortTh col="address">{t("address")}</SortTh>
+                  <th className="px-3 py-2">{t("donationType")}</th>
                   <SortTh col="amount" className="text-right">
                     {t("amount")}
                   </SortTh>
@@ -220,6 +294,24 @@ export default async function DonationsPage({
                       </a>
                     </td>
                     <td className="px-3 py-2">{r.address}</td>
+                    <td className="px-3 py-2">
+                      <div className="space-y-1">
+                        <DonationTypeBadge
+                          type={r.donationType}
+                          locale={locale}
+                        />
+                        {r.donationType === "non_cash" && r.itemDescription && (
+                          <div className="text-xs text-stone-600">
+                            {r.itemDescription}
+                          </div>
+                        )}
+                        {r.donationType === "other" && r.otherDescription && (
+                          <div className="text-xs text-stone-600">
+                            {r.otherDescription}
+                          </div>
+                        )}
+                      </div>
+                    </td>
                     <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
                       {formatNPR(r.amount, locale)}
                     </td>
@@ -296,8 +388,14 @@ export default async function DonationsPage({
                 className="rounded-xl border border-stone-200 bg-white p-4"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="font-medium">{r.donorName}</div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="font-medium">{r.donorName}</div>
+                      <DonationTypeBadge
+                        type={r.donationType}
+                        locale={locale}
+                      />
+                    </div>
                     <div className="text-sm text-stone-600">
                       <a
                         href={`tel:${r.phone}`}
@@ -308,6 +406,22 @@ export default async function DonationsPage({
                       {" · "}
                       {r.address}
                     </div>
+                    {r.donationType === "non_cash" && r.itemDescription && (
+                      <div className="mt-1 text-sm text-stone-600">
+                        <span className="font-medium">
+                          {t("itemDescription")}:
+                        </span>{" "}
+                        {r.itemDescription}
+                      </div>
+                    )}
+                    {r.donationType === "other" && r.otherDescription && (
+                      <div className="mt-1 text-sm text-stone-600">
+                        <span className="font-medium">
+                          {t("otherDescription")}:
+                        </span>{" "}
+                        {r.otherDescription}
+                      </div>
+                    )}
                   </div>
                   <div className="text-right font-semibold tabular-nums">
                     {formatNPR(r.amount, locale)}

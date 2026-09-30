@@ -95,6 +95,16 @@ function Row({ label, children }: { label: string; children: string }) {
   );
 }
 
+function getDonationTypeDisplay(donationType: string, locale: string): string {
+  // Map donation types to localized display values
+  const typeMap = {
+    cash: locale === "ne" ? "नगद" : "Cash",
+    non_cash: locale === "ne" ? "वस्तु" : "Non-cash",
+    other: locale === "ne" ? "अन्य" : "Other",
+  };
+  return typeMap[donationType as keyof typeof typeMap] || donationType;
+}
+
 function ReceiptDocument({
   data,
   labels,
@@ -137,6 +147,15 @@ function ReceiptDocument({
           <Row label={labels.phone}>{data.phone}</Row>
           <Row label={labels.address}>{data.address}</Row>
           <Row label={labels.date}>{formatDate(data.donationDate, locale)}</Row>
+          <Row label={labels.donationType}>
+            {getDonationTypeDisplay(data.donationType, locale)}
+          </Row>
+          {data.donationType === "non_cash" && data.itemDescription && (
+            <Row label={labels.itemDescription}>{data.itemDescription}</Row>
+          )}
+          {data.donationType === "other" && data.otherDescription && (
+            <Row label={labels.otherDescription}>{data.otherDescription}</Row>
+          )}
           {data.remarks && <Row label={labels.remarks}>{data.remarks}</Row>}
         </View>
 
@@ -146,10 +165,14 @@ function ReceiptDocument({
               <T>{labels.amount}</T>
             </Text>
             <Text style={s.amountValue}>
-              <T>{formatNPR(data.amount, locale)}</T>
+              <T>
+                {data.donationType === "cash" || Number(data.amount) > 0
+                  ? formatNPR(data.amount, locale)
+                  : "-"}
+              </T>
             </Text>
           </View>
-          {labels.amountInWords ? (
+          {data.donationType === "cash" && labels.amountInWords ? (
             <Text style={s.amountWords}>
               <T>{labels.amountInWords}</T>
             </Text>

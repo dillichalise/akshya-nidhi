@@ -10,6 +10,7 @@ const s = StyleSheet.create({
   page: { padding: 28, fontFamily: "NotoLatin", fontSize: 9, color: "#1c1917" },
   title: { fontSize: 16, fontWeight: 700, color: "#92400e" },
   meta: { marginTop: 2, color: "#57534e" },
+  summary: { flexDirection: "row", marginTop: 8, marginBottom: 8, padding: 7, backgroundColor: "#fafaf9", border: "0.5pt solid #d6d3d1" },
   head: { flexDirection: "row", backgroundColor: "#fef3c7", borderBottom: "1pt solid #d6d3d1", paddingVertical: 4 },
   row: { flexDirection: "row", borderBottom: "0.5pt solid #e7e5e4", paddingVertical: 3 },
   cell: { paddingHorizontal: 4 },
@@ -41,6 +42,14 @@ function ReportDocument({ data, labels, locale }: { data: ReportData; labels: Re
           <Text style={s.meta}>
             <T>{`${labels.generatedOn} · ${labels.generatedBy}`}</T>
           </Text>
+          <View style={s.summary}>
+            <Text>
+              <T bold>{`${labels.summaryHeader}: `}</T>
+              <T>{`${labels.income}: ${formatNPR(data.summary.income, locale)}   `}</T>
+              <T>{`${labels.expenditure}: ${formatNPR(data.summary.expenditure, locale)}   `}</T>
+              <T bold>{`${labels.savings}: ${formatNPR(data.summary.savings, locale)}`}</T>
+            </Text>
+          </View>
         </View>
 
         <View style={{ marginTop: 10 }}>

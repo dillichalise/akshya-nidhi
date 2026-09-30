@@ -3,16 +3,20 @@ import { useTranslations } from "next-intl";
 import { btnDanger } from "./ui";
 
 /** Submits its parent form only after the user confirms.
- *  Pass `iconOnly` to render a compact icon button with a hover tooltip instead of text. */
+ *  Pass `iconOnly` to render a compact icon button with a hover tooltip instead of text.
+ *  Pass `confirmMessage` to override the default confirmation text. */
 export function ConfirmDeleteButton({
   iconOnly,
   tooltip,
+  confirmMessage,
 }: {
   iconOnly?: boolean;
   tooltip?: string;
+  confirmMessage?: string;
 }) {
   const t = useTranslations();
   const label = tooltip ?? t("common.delete");
+  const message = confirmMessage ?? t("donation.confirmDelete");
 
   if (iconOnly) {
     return (
@@ -22,7 +26,7 @@ export function ConfirmDeleteButton({
         aria-label={label}
         className="group relative inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-300 bg-white text-red-600 hover:bg-red-50 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-400/40"
         onClick={(e) => {
-          if (!confirm(t("donation.confirmDelete"))) e.preventDefault();
+          if (!confirm(message)) e.preventDefault();
           else
             (
               e.currentTarget.closest("form") as HTMLFormElement
@@ -61,7 +65,7 @@ export function ConfirmDeleteButton({
     <button
       className={btnDanger}
       onClick={(e) => {
-        if (!confirm(t("donation.confirmDelete"))) e.preventDefault();
+        if (!confirm(message)) e.preventDefault();
       }}
     >
       {t("common.delete")}

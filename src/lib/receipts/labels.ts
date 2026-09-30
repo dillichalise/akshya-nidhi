@@ -22,8 +22,14 @@ export async function getReceiptLabels(donation: ReceiptRow) {
     phone: td("phone"),
     address: td("address"),
     amount: td("amount"),
-    amountInWords: amountInWords(donation.amount, locale),
+    amountInWords:
+      donation.donationType === "cash"
+        ? amountInWords(donation.amount, locale)
+        : "",
     date: td("date"),
+    donationType: td("donationType"),
+    itemDescription: td("itemDescription"),
+    otherDescription: td("otherDescription"),
     remarks: td("remarks"),
     issuedBy: t("issuedBy", { name: donation.createdByName ?? "" }),
     generatedOn: t("generatedOn", { when: formatDateTime(new Date(), locale) }),

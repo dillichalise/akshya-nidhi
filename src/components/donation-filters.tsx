@@ -8,11 +8,14 @@ import { btnGhost, btnPrimary, inputCls } from "./ui";
 
 const DEBOUNCE_MS = 3000;
 
-function buildUrl(q: string, from: string, to: string) {
+function buildUrl(q: string, from: string, to: string, donationType: string, minAmt: string, maxAmt: string) {
   const u = new URLSearchParams();
   if (q.trim()) u.set("q", q.trim());
   if (from) u.set("from", from);
   if (to) u.set("to", to);
+  if (donationType) u.set("type", donationType);
+  if (minAmt) u.set("minAmt", minAmt);
+  if (maxAmt) u.set("maxAmt", maxAmt);
   const s = u.toString();
   return s ? `/donations?${s}` : "/donations";
 }
@@ -26,28 +29,37 @@ export function DonationFilters({
   q,
   from,
   to,
+  donationType,
+  minAmt,
+  maxAmt,
 }: {
   q: string;
   from: string;
   to: string;
+  donationType: string;
+  minAmt: string;
+  maxAmt: string;
 }) {
   const t = useTranslations();
   const router = useRouter();
   const [query, setQuery] = useState(q);
   const [dateFrom, setDateFrom] = useState(from);
   const [dateTo, setDateTo] = useState(to);
+  const [typeFilter, setTypeFilter] = useState(donationType);
+  const [minimum, setMinimum] = useState(minAmt);
+  const [maximum, setMaximum] = useState(maxAmt);
 
   useEffect(() => {
-    if (query.trim() === q) return; // nothing new to apply
+    if (query.trim() === q && typeFilter === donationType && minimum === minAmt && maximum === maxAmt) return; // nothing new to apply
     const id = setTimeout(
-      () => router.replace(buildUrl(query, dateFrom, dateTo)),
+      () => router.replace(buildUrl(query, dateFrom, dateTo, typeFilter, minimum, maximum)),
       DEBOUNCE_MS,
     );
     return () => clearTimeout(id);
-  }, [query, dateFrom, dateTo, q, router]);
+  }, [query, dateFrom, dateTo, typeFilter, minimum, maximum, q, donationType, minAmt, maxAmt, router]);
 
   return (
-    <form className="grid gap-3 sm:grid-cols-[1fr_auto_auto_auto_auto] sm:items-end">
+    <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
       {/* Search — full width on all breakpoints */}
       <input
         name="q"
@@ -57,6 +69,49 @@ export function DonationFilters({
         aria-label={t("common.search")}
         className={inputCls}
       />
+
+      {/* Donation type filter */}
+      <label className="text-sm text-stone-600">
+        {t("donation.donationType")}
+        <select
+          name="type"
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className={inputCls}
+        >
+          <option value="">{t("donation.allTypes")}</option>
+          <option value="cash">{t("donation.cash")}</option>
+          <option value="non_cash">{t("donation.nonCash")}</option>
+          <option value="other">{t("donation.other")}</option>
+        </select>
+      </label>
+
+      <label className="text-sm text-stone-600">
+        {t("donation.minAmount")}
+        <input
+          name="minAmt"
+          type="number"
+          min="1"
+          step="1"
+          inputMode="numeric"
+          value={minimum}
+          onChange={(event) => setMinimum(event.target.value)}
+          className={inputCls}
+        />
+      </label>
+      <label className="text-sm text-stone-600">
+        {t("donation.maxAmount")}
+        <input
+          name="maxAmt"
+          type="number"
+          min="1"
+          step="1"
+          inputMode="numeric"
+          value={maximum}
+          onChange={(event) => setMaximum(event.target.value)}
+          className={inputCls}
+        />
+      </label>
 
       {/* Date pickers — side by side on mobile, individual columns on sm+ */}
       <div className="grid grid-cols-2 gap-3 sm:contents">

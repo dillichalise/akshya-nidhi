@@ -9,7 +9,12 @@ import {
   softDeleteDonation,
   updateDonation,
 } from "./donations";
-import { getReport, getTopDonors, getTotals } from "./reports";
+import {
+  getReport,
+  getTopDonors,
+  getTotals,
+  listDonorSummaries,
+} from "./reports";
 import {
   countOtherActiveSuperAdmins,
   createUser,
@@ -28,6 +33,9 @@ const donation = (over: Partial<Parameters<typeof createDonation>[0]>) => ({
   donorName: "Ram Sharma",
   address: "Kathmandu",
   phone: "9841234567",
+  donationType: "cash" as const,
+  itemDescription: null,
+  otherDescription: null,
   amount: "1000",
   donationDate: today,
   remarks: null,
@@ -101,9 +109,11 @@ describe("users", () => {
 
 describe("donations", () => {
   it("rejects non-positive amounts at the database level", async () => {
-    await expect(
-      createDonation(donation({ amount: "0" }), userId),
-    ).rejects.toThrow();
+    const created = await createDonation(donation({ amount: "0" }), userId).catch(
+      () => null,
+    );
+    if (created) await softDeleteDonation(created.id);
+    expect(created).toBeNull();
   });
   it("excludes soft-deleted rows from lists", async () => {
     const { rows, total } = await listDonations({ page: 1, pageSize: 50 });
@@ -117,6 +127,36 @@ describe("donations", () => {
     expect(
       (await listDonations({ q: "98111", page: 1, pageSize: 10 })).total,
     ).toBe(1);
+  });
+  it("combines amount bounds with donation type", async () => {
+    const suffix = String(Date.now());
+    const donorName = `Amount filter ${suffix}`;
+    const phone = `amount-${suffix}`;
+    const createdIds: string[] = [];
+    try {
+      createdIds.push((await createDonation(donation({ donorName, phone, amount: "1250" }), userId)).id);
+      createdIds.push((await createDonation(
+        donation({ donorName, phone, donationType: "non_cash", itemDescription: "Rice", amount: "1500" }),
+        userId,
+      )).id);
+      createdIds.push((await createDonation(
+        donation({ donorName, phone, donationType: "non_cash", itemDescription: "Oil", amount: "2500" }),
+        userId,
+      )).id);
+
+      const result = await listDonations({
+        q: donorName,
+        donationType: "non_cash",
+        minAmt: "1000",
+        maxAmt: "2000",
+        page: 1,
+        pageSize: 10,
+      });
+      expect(result.total).toBe(1);
+      expect(result.rows[0]).toMatchObject({ donationType: "non_cash", amount: "1500.00" });
+    } finally {
+      await Promise.all(createdIds.map((id) => softDeleteDonation(id)));
+    }
   });
   it("cannot edit a soft-deleted donation", async () => {
     const all = await (await import("@/db")).db().select().from(donations);
@@ -163,6 +203,52 @@ describe("reports", () => {
   it("empty range gives zero", async () => {
     const r = await getReport("2000-01-01", "2000-01-02");
     expect(r).toMatchObject({ count: 0, total: "0", rows: [] });
+  });
+  it("groups donor totals and applies type and cash-total filters", async () => {
+    const suffix = String(Date.now());
+    const donorName = `Summary donor ${suffix}`;
+    const phone = `summary-${suffix}`;
+    const createdIds: string[] = [];
+    try {
+      createdIds.push((await createDonation(donation({ donorName, phone, amount: "125.25" }), userId)).id);
+      createdIds.push((await createDonation(
+        donation({ donorName, phone, donationType: "non_cash", itemDescription: "Rice", amount: "20" }),
+        userId,
+      )).id);
+      createdIds.push((await createDonation(
+        donation({ donorName, phone, donationType: "other", otherDescription: "Support", amount: "10" }),
+        userId,
+      )).id);
+
+      const cashMatches = await listDonorSummaries({
+        minTotal: "100",
+        maxTotal: "150",
+        donationType: "cash",
+        from: today,
+        to: today,
+        page: 1,
+        pageSize: 20,
+      });
+      expect(cashMatches.rows.find((row) => row.phone === phone)).toMatchObject({
+        donorName,
+        totalCash: "125.25",
+        nonCashCount: 1,
+        otherCount: 1,
+        donationCount: 3,
+        lastDonationDate: today,
+      });
+
+      const nonCashMatches = await listDonorSummaries({
+        donationType: "non_cash",
+        from: today,
+        to: today,
+        page: 1,
+        pageSize: 20,
+      });
+      expect(nonCashMatches.rows.some((row) => row.phone === phone)).toBe(true);
+    } finally {
+      await Promise.all(createdIds.map((id) => softDeleteDonation(id)));
+    }
   });
 });
 

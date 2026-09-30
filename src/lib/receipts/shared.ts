@@ -4,6 +4,9 @@ export type ReceiptRow = {
   address: string;
   phone: string;
   amount: string;
+  donationType: "cash" | "non_cash" | "other";
+  itemDescription: string | null;
+  otherDescription: string | null;
   donationDate: string;
   remarks: string | null;
   createdByName: string | null;
@@ -22,6 +25,9 @@ export type ReceiptLabels = {
   amount: string;
   amountInWords: string;
   date: string;
+  donationType: string;
+  itemDescription: string;
+  otherDescription: string;
   remarks: string;
   issuedBy: string;
   generatedOn: string;

@@ -10,6 +10,8 @@ const items: { href: string; key: string; perm: Permission }[] = [
   { href: "/dashboard", key: "dashboard", perm: "dashboard:view" },
   { href: "/donations/new", key: "addDonation", perm: "donation:create" },
   { href: "/donations", key: "donations", perm: "donation:list" },
+  { href: "/donors", key: "donors", perm: "donation:list" },
+  { href: "/expenditures", key: "expenditures", perm: "expenditure:list" },
   { href: "/reports", key: "reports", perm: "report:download" },
   { href: "/users", key: "users", perm: "user:list" },
 ];

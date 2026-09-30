@@ -16,6 +16,7 @@ export type ReportData = {
   rows: ReportRow[];
   total: string;
   count: number;
+  summary: { income: string; expenditure: string; savings: string };
 };
 
 export type ReportLabels = {
@@ -33,6 +34,10 @@ export type ReportLabels = {
   amount: string;
   remarks: string;
   page: string;
+  summaryHeader: string;
+  income: string;
+  expenditure: string;
+  savings: string;
 };
 
 /** Longest range a report may span (keeps serverless exports bounded). */

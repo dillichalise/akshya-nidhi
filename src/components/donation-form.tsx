@@ -36,10 +36,24 @@ export function DonationForm({
   // Live amount state.
   // rawAmount  — plain numeric string (digits + optional dot), used for validation/submit.
   // displayAmount — comma-grouped display string shown in the visible input.
+  // Donation type state
+  const [donationType, setDonationType] = useState<
+    "cash" | "non_cash" | "other"
+  >((v.donationType as "cash" | "non_cash" | "other") ?? "cash");
+
+  // Live amount state (only used for cash donations)
   const [rawAmount, setRawAmount] = useState(v.amount ?? "");
   const [displayAmount, setDisplayAmount] = useState(
     v.amount ? formatAmountInput(v.amount) : "",
   );
+
+  // Reset amount when switching away from cash
+  useEffect(() => {
+    if (donationType !== "cash") {
+      setRawAmount("");
+      setDisplayAmount("");
+    }
+  }, [donationType]);
 
   // Receipt modal state — only relevant on the "add" form (not edit).
   const [receiptOpen, setReceiptOpen] = useState(false);
@@ -66,14 +80,20 @@ export function DonationForm({
     nameRef.current?.focus();
   };
 
-  // Derive formatted preview values from rawAmount.
+  // Derive formatted preview values from rawAmount (only for cash donations).
   const amountNum = Number(rawAmount);
   const formattedAmount =
-    rawAmount.trim() !== "" && Number.isFinite(amountNum) && amountNum > 0
+    donationType === "cash" &&
+    rawAmount.trim() !== "" &&
+    Number.isFinite(amountNum) &&
+    amountNum > 0
       ? formatNPR(amountNum, locale)
       : null;
   const wordsAmount =
-    rawAmount.trim() !== "" && Number.isFinite(amountNum) && amountNum > 0
+    donationType === "cash" &&
+    rawAmount.trim() !== "" &&
+    Number.isFinite(amountNum) &&
+    amountNum > 0
       ? amountInWords(amountNum, locale)
       : null;
 
@@ -227,6 +247,71 @@ export function DonationForm({
               />
             </div>
           </Field>
+        </div>
+
+        {/* Donation Type Selection */}
+        <Field
+          label={t("donation.donationType")}
+          name="donationType"
+          error={err("donationType")}
+        >
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="donationType"
+                value="cash"
+                checked={donationType === "cash"}
+                onChange={(e) =>
+                  setDonationType(
+                    e.target.value as "cash" | "non_cash" | "other",
+                  )
+                }
+                className="h-4 w-4 text-amber-600 focus:ring-amber-600 focus:ring-2"
+              />
+              <span className="text-sm font-medium text-stone-700">
+                {t("donation.cash")}
+              </span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="donationType"
+                value="non_cash"
+                checked={donationType === "non_cash"}
+                onChange={(e) =>
+                  setDonationType(
+                    e.target.value as "cash" | "non_cash" | "other",
+                  )
+                }
+                className="h-4 w-4 text-amber-600 focus:ring-amber-600 focus:ring-2"
+              />
+              <span className="text-sm font-medium text-stone-700">
+                {t("donation.nonCash")}
+              </span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="donationType"
+                value="other"
+                checked={donationType === "other"}
+                onChange={(e) =>
+                  setDonationType(
+                    e.target.value as "cash" | "non_cash" | "other",
+                  )
+                }
+                className="h-4 w-4 text-amber-600 focus:ring-amber-600 focus:ring-2"
+              />
+              <span className="text-sm font-medium text-stone-700">
+                {t("donation.other")}
+              </span>
+            </label>
+          </div>
+        </Field>
+
+        {/* Amount field - only for cash donations */}
+        {donationType === "cash" && (
           <Field
             label={t("donation.amount")}
             name="amount"
@@ -287,7 +372,112 @@ export function DonationForm({
               <p className="mt-0.5 text-xs text-stone-500">{wordsAmount}</p>
             )}
           </Field>
-        </div>
+        )}
+
+        {/* Non-cash amount field - optional with default "0" */}
+        {donationType !== "cash" && (
+          <Field
+            label={`${t("donation.amount")} (${t("common.optional")})`}
+            name="amount"
+            error={err("amount")}
+          >
+            {/* Hidden field carries the raw value for server action validation */}
+            <input type="hidden" name="amount" value={rawAmount || "0"} />
+
+            {/* Visible grouped input with currency prefix addon */}
+            <div
+              className={
+                "flex overflow-hidden rounded-lg border border-stone-300 bg-white " +
+                "focus-within:border-amber-600 focus-within:ring-2 focus-within:ring-amber-600/30 " +
+                (state.errors.amount ? "border-red-500" : "")
+              }
+            >
+              {/* Currency badge */}
+              <span className="flex items-center border-r border-stone-300 bg-stone-50 px-3 text-sm font-semibold text-stone-600 select-none">
+                {locale === "ne" ? "रु." : "Rs."}
+              </span>
+
+              {/* Amount input — shows comma-grouped value, no border/ring (handled by wrapper) */}
+              <input
+                id="amount"
+                inputMode="decimal"
+                value={displayAmount}
+                autoComplete="off"
+                aria-invalid={!!state.errors.amount}
+                aria-describedby="amount-error"
+                placeholder="0"
+                className={
+                  "block w-full min-h-11 bg-transparent px-3 py-2 text-base " +
+                  "text-stone-900 tabular-nums placeholder:text-stone-400 " +
+                  "focus:outline-none"
+                }
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/,/g, "");
+                  setRawAmount(raw);
+                  setDisplayAmount(formatAmountInput(raw));
+                }}
+                onKeyDown={(e) => {
+                  // Allow digits, a single decimal point, and control keys
+                  if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+                    if (!/[\d.]/.test(e.key)) {
+                      e.preventDefault();
+                      return;
+                    }
+                    // Block a second decimal point
+                    if (e.key === "." && rawAmount.includes(".")) {
+                      e.preventDefault();
+                    }
+                  }
+                }}
+              />
+            </div>
+
+            {wordsAmount && (
+              <p className="mt-0.5 text-xs text-stone-500">{wordsAmount}</p>
+            )}
+          </Field>
+        )}
+
+        {/* Item description field - only for non-cash donations */}
+        {donationType === "non_cash" && (
+          <Field
+            label={t("donation.itemDescription")}
+            name="itemDescription"
+            error={err("itemDescription")}
+          >
+            <textarea
+              id="itemDescription"
+              name="itemDescription"
+              rows={3}
+              defaultValue={v.itemDescription}
+              aria-invalid={!!state.errors.itemDescription}
+              aria-describedby="itemDescription-error"
+              className={inputCls}
+              placeholder={t("donation.itemDescriptionPlaceholder")}
+            />
+          </Field>
+        )}
+
+        {/* Other description field - only for other donations */}
+        {donationType === "other" && (
+          <Field
+            label={t("donation.otherDescription")}
+            name="otherDescription"
+            error={err("otherDescription")}
+          >
+            <textarea
+              id="otherDescription"
+              name="otherDescription"
+              rows={3}
+              defaultValue={v.otherDescription}
+              aria-invalid={!!state.errors.otherDescription}
+              aria-describedby="otherDescription-error"
+              className={inputCls}
+              placeholder={t("donation.otherDescriptionPlaceholder")}
+            />
+          </Field>
+        )}
+
         <Field
           label={t("donation.date")}
           name="donationDate"
@@ -301,6 +491,7 @@ export function DonationForm({
             aria-describedby="donationDate-error"
           />
         </Field>
+
         <Field
           label={`${t("donation.remarks")} (${t("common.optional")})`}
           name="remarks"

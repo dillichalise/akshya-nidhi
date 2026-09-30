@@ -1,5 +1,9 @@
 import "server-only";
-import { getReport } from "@/db/queries/reports";
+import {
+  getDailySummary,
+  getRangeSummary,
+  getReport,
+} from "@/db/queries/reports";
 import { authorize } from "@/lib/auth/session";
 import { dateRangeSchema } from "@/lib/validation/donation";
 import { getReportLabels } from "./labels";
@@ -17,8 +21,13 @@ export async function prepareReport(request: Request) {
   if (!parsed.success || rangeDays(from, to) > MAX_RANGE_DAYS) {
     return { error: new Response("Invalid date range", { status: 400 }) } as const;
   }
-  const report = await getReport(from, to);
-  const data: ReportData = { from, to, ...report };
+  const [report, summary] = await Promise.all([
+    getReport(from, to),
+    from === to
+      ? getDailySummary(from).then(({ income, expenditure, savings }) => ({ income, expenditure, savings }))
+      : getRangeSummary(from, to).then(({ totals }) => totals),
+  ]);
+  const data: ReportData = { from, to, ...report, summary };
   const { labels, locale } = await getReportLabels({ from, to, generatedBy: user.fullName, count: report.count });
   return { data, labels: labels as ReportLabels, locale } as const;
 }

@@ -26,6 +26,10 @@ export async function getReportLabels(opts: { from: string; to: string; generate
     amount: td("amount"),
     remarks: td("remarks"),
     page: tc("page", { page: "{page}", pages: "{pages}" }),
+    summaryHeader: t("summaryHeader"),
+    income: t("income"),
+    expenditure: t("expenditure"),
+    savings: t("savings"),
   };
   return { labels, locale };
 }

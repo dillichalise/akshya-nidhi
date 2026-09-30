@@ -8,7 +8,7 @@ const NPR_FORMAT = "[>=10000000]##\\,##\\,##\\,##0.00;[>=100000]##\\,##\\,##0.00
 
 export async function buildExcel(data: ReportData, labels: ReportLabels, locale: string): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet("Donations", { views: [{ state: "frozen", ySplit: 5 }] });
+  const ws = wb.addWorksheet("Donations", { views: [{ state: "frozen", ySplit: 9 }] });
 
   ws.mergeCells("A1:G1");
   ws.getCell("A1").value = labels.title;
@@ -19,7 +19,18 @@ export async function buildExcel(data: ReportData, labels: ReportLabels, locale:
   ws.getCell("A3").value = `${labels.generatedOn} · ${labels.generatedBy}`;
   ws.getCell("A3").font = { color: { argb: "FF6B7280" } };
 
-  const header = ws.getRow(5);
+  [
+    [labels.income, Number(data.summary.income)],
+    [labels.expenditure, Number(data.summary.expenditure)],
+    [labels.savings, Number(data.summary.savings)],
+  ].forEach(([label, value], index) => {
+    const row = ws.getRow(index + 5);
+    row.values = [label, value];
+    row.getCell(2).numFmt = NPR_FORMAT;
+    if (index === 2) row.font = { bold: true };
+  });
+
+  const header = ws.getRow(9);
   header.values = [labels.sn, labels.date, labels.name, labels.phone, labels.address, labels.amount, labels.remarks];
   header.font = { bold: true };
   header.eachCell((c) => {
@@ -43,8 +54,8 @@ export async function buildExcel(data: ReportData, labels: ReportLabels, locale:
     row.getCell(6).numFmt = NPR_FORMAT;
   });
 
-  const first = 6;
-  const last = 5 + data.rows.length;
+  const first = 10;
+  const last = 9 + data.rows.length;
   const total = ws.addRow(["", "", "", "", labels.grandTotal, { formula: `SUM(F${first}:F${Math.max(last, first)})`, result: Number(data.total) }, ""]);
   total.font = { bold: true };
   total.getCell(6).numFmt = NPR_FORMAT;

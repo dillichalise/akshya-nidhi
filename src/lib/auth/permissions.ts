@@ -7,6 +7,10 @@ export const PERMISSIONS = [
   "donation:edit",
   "donation:delete",
   "donation:receipt",
+  "expenditure:create",
+  "expenditure:list",
+  "expenditure:edit",
+  "expenditure:delete",
   "user:list",
   "user:manage", // create, edit, activate/deactivate, reset password
   "report:download",
@@ -24,6 +28,10 @@ const matrix: Record<Permission, readonly Role[]> = {
   // Anyone who can add a donation can fetch its own receipt; admins/super_admins can
   // reprint any donation's receipt (enforced with an ownership check in the route for "user").
   "donation:receipt": ["super_admin", "admin", "user"],
+  "expenditure:create": ["super_admin", "admin"],
+  "expenditure:list": ["super_admin", "admin"],
+  "expenditure:edit": ["super_admin"],
+  "expenditure:delete": ["super_admin"],
   "user:list": ["super_admin", "admin"],
   "user:manage": ["super_admin"],
   "report:download": ["super_admin", "admin"],

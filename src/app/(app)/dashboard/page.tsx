@@ -8,8 +8,10 @@ import { Card, PageTitle } from "@/components/ui";
 import {
   getAmountDistribution,
   getDayOverDay,
+  getDailySummary,
   getEventDailyTotals,
   getEventTotal,
+  getOverallSummary,
   getTopDonors,
   getTotals,
 } from "@/db/queries/reports";
@@ -19,6 +21,7 @@ import {
   formatDate,
   formatNPR,
   localizedCount,
+  todayInNepal,
 } from "@/lib/format";
 
 // Always fresh: totals must reflect the latest donations.
@@ -34,6 +37,8 @@ export default async function DashboardPage() {
     distribution,
     topToday,
     topOverall,
+    dailySummary,
+    overallSummary,
     t,
     locale,
   ] = await Promise.all([
@@ -44,6 +49,8 @@ export default async function DashboardPage() {
     getAmountDistribution(),
     getTopDonors("today"),
     getTopDonors("overall"),
+    getDailySummary(todayInNepal()),
+    getOverallSummary(),
     getTranslations("dashboard"),
     getLocale(),
   ]);
@@ -53,7 +60,7 @@ export default async function DashboardPage() {
       <PageTitle>{t("title")}</PageTitle>
 
       {/* ── Row 1: today / overall summary cards ── */}
-      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
+      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
         <Card>
           <div className="text-sm text-stone-600">
             {t("totalToday")} · {formatDate(totals.todayDate, locale)}
@@ -71,20 +78,53 @@ export default async function DashboardPage() {
           </div>
         </Card>
         <Card>
-          <div className="text-sm text-stone-600">{t("totalOverall")}</div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums text-amber-800 sm:text-3xl">
-            {formatNPR(totals.overall.total, locale)}
+          <div className="text-sm text-stone-600">{t("todayExpenditure")}</div>
+          <div className="mt-1 text-2xl font-semibold tabular-nums text-red-700 sm:text-3xl">
+            {formatNPR(dailySummary.expenditure, locale)}
           </div>
-          <div className="mt-1 text-sm font-medium text-amber-700 sm:text-base">
-            {amountInWords(totals.overall.total, locale)}
+        </Card>
+        <Card>
+          <div className="text-sm text-stone-600">{t("todaySavings")}</div>
+          <div className={`mt-1 text-2xl font-semibold tabular-nums sm:text-3xl ${dailySummary.savings.startsWith("-") ? "text-red-700" : "text-green-700"}`}>
+            {formatNPR(dailySummary.savings, locale)}
           </div>
-          <div className="mt-1 text-sm text-stone-500">
-            {t("donations", {
-              count: localizedCount(totals.overall.count, locale),
-            })}
+        </Card>
+        <Card>
+          <div className="text-sm text-stone-600">{t("overallSavings")}</div>
+          <div className={`mt-1 text-2xl font-semibold tabular-nums sm:text-3xl ${overallSummary.savings.startsWith("-") ? "text-red-700" : "text-green-700"}`}>
+            {formatNPR(overallSummary.savings, locale)}
+          </div>
+          <div className="mt-2 text-sm text-stone-500">
+            {t("overallIncome")}: {formatNPR(overallSummary.income, locale)}
           </div>
         </Card>
       </div>
+
+      <section aria-labelledby="overall-summary-title">
+        <h2 id="overall-summary-title" className="mb-3 text-sm font-semibold text-stone-800 sm:text-base">
+          {t("overallSummary")}
+        </h2>
+        <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
+          <Card>
+            <div className="text-sm text-stone-600">{t("overallIncome")}</div>
+            <div className="mt-1 text-xl font-semibold tabular-nums text-amber-800 sm:text-2xl">
+              {formatNPR(overallSummary.income, locale)}
+            </div>
+          </Card>
+          <Card>
+            <div className="text-sm text-stone-600">{t("overallExpenditure")}</div>
+            <div className="mt-1 text-xl font-semibold tabular-nums text-red-700 sm:text-2xl">
+              {formatNPR(overallSummary.expenditure, locale)}
+            </div>
+          </Card>
+          <Card>
+            <div className="text-sm text-stone-600">{t("overallSavings")}</div>
+            <div className={`mt-1 text-xl font-semibold tabular-nums sm:text-2xl ${overallSummary.savings.startsWith("-") ? "text-red-700" : "text-green-700"}`}>
+              {formatNPR(overallSummary.savings, locale)}
+            </div>
+          </Card>
+        </div>
+      </section>
 
       {/* ── Row 2: day-over-day + target progress ── */}
       <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
