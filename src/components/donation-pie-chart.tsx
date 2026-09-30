@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import {
   Cell,
   Legend,
@@ -21,6 +21,22 @@ const COLORS = [
   "#78350f", // amber-900
 ];
 
+const WIDE_QUERY = "(min-width: 480px)";
+
+function subscribeWide(callback: () => void) {
+  const query = window.matchMedia(WIDE_QUERY);
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+function getWideSnapshot() {
+  return window.matchMedia(WIDE_QUERY).matches;
+}
+
+function getWideServerSnapshot() {
+  return true;
+}
+
 type Props = {
   data: AmountBracket[];
   ariaLabel: string;
@@ -30,14 +46,11 @@ export function DonationPieChart({ data, ariaLabel }: Props) {
   const total = data.reduce((s, d) => s + d.count, 0);
 
   // Show inline labels only on wider screens where they won't overlap
-  const [wide, setWide] = useState(true);
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 480px)");
-    setWide(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setWide(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
+  const wide = useSyncExternalStore(
+    subscribeWide,
+    getWideSnapshot,
+    getWideServerSnapshot,
+  );
 
   if (total === 0) {
     return (

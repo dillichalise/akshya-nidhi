@@ -5,7 +5,7 @@ import { btnGhost, btnPrimary } from "./ui";
 
 // ─── shared types ─────────────────────────────────────────────────────────────
 
-type LoadState = "idle" | "loading" | "ready" | "error";
+type LoadedReceipt = { receiptUrl: string; blobUrl: string };
 
 // ─── ReceiptPreviewModal ───────────────────────────────────────────────────────
 // Standalone modal — caller controls `open` / `onClose`.
@@ -25,43 +25,57 @@ export function ReceiptPreviewModal({
   extraActions?: React.ReactNode;
 }) {
   const t = useTranslations("receipt");
-  const [loadState, setLoadState] = useState<LoadState>("idle");
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [loadedReceipt, setLoadedReceipt] = useState<LoadedReceipt | null>(
+    null,
+  );
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const blobUrl =
+    loadedReceipt?.receiptUrl === receiptUrl ? loadedReceipt.blobUrl : null;
+  const loadFailed = failedUrl === receiptUrl;
+  const isLoading = open && !blobUrl && !loadFailed;
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   // Fetch PDF as blob the first time the modal opens; reuse on subsequent opens.
   useEffect(() => {
-    if (!open || blobUrl || loadState === "loading") return;
-    setLoadState("loading");
+    if (
+      !open ||
+      loadedReceipt?.receiptUrl === receiptUrl ||
+      failedUrl === receiptUrl
+    ) {
+      return;
+    }
+
+    let cancelled = false;
     fetch(receiptUrl)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.blob();
       })
       .then((blob) => {
-        setBlobUrl(URL.createObjectURL(blob));
-        setLoadState("ready");
+        const blobUrl = URL.createObjectURL(blob);
+        if (cancelled) {
+          URL.revokeObjectURL(blobUrl);
+          return;
+        }
+        setLoadedReceipt({ receiptUrl, blobUrl });
       })
-      .catch(() => setLoadState("error"));
-  }, [open, blobUrl, loadState, receiptUrl]);
+      .catch(() => {
+        if (!cancelled) setFailedUrl(receiptUrl);
+      });
 
-  // Reset blob when the URL changes (different donation)
-  useEffect(() => {
-    setBlobUrl((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return null;
-    });
-    setLoadState("idle");
-  }, [receiptUrl]);
-
-  // Revoke on unmount
-  useEffect(() => {
     return () => {
-      if (blobUrl) URL.revokeObjectURL(blobUrl);
+      cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [open, receiptUrl, loadedReceipt, failedUrl]);
+
+  // Revoke cached URLs when replaced or when the modal unmounts.
+  useEffect(() => {
+    if (!loadedReceipt) return;
+    return () => {
+      URL.revokeObjectURL(loadedReceipt.blobUrl);
+    };
+  }, [loadedReceipt]);
 
   // Sync native <dialog> open state
   useEffect(() => {
@@ -121,7 +135,7 @@ export function ReceiptPreviewModal({
 
         {/* PDF preview area */}
         <div className="relative min-h-0 flex-1 bg-stone-100">
-          {(loadState === "idle" || loadState === "loading") && (
+          {isLoading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-stone-500">
               <svg
                 className="h-8 w-8 animate-spin text-amber-700"
@@ -147,7 +161,7 @@ export function ReceiptPreviewModal({
               <span className="text-sm">Loading…</span>
             </div>
           )}
-          {loadState === "error" && (
+          {loadFailed && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-red-600">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -169,7 +183,7 @@ export function ReceiptPreviewModal({
               </p>
             </div>
           )}
-          {loadState === "ready" && blobUrl && (
+          {blobUrl && (
             <iframe
               ref={iframeRef}
               src={blobUrl}
@@ -189,7 +203,7 @@ export function ReceiptPreviewModal({
             <button
               type="button"
               onClick={handlePrint}
-              disabled={loadState !== "ready"}
+              disabled={!blobUrl}
               className={btnGhost + " gap-2 disabled:opacity-50"}
             >
               <svg

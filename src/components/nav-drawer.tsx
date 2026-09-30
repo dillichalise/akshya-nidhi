@@ -26,11 +26,6 @@ export function NavDrawer({
   const drawerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
-  // Close on route change (user tapped a link)
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
-
   // Close on Escape
   useEffect(() => {
     if (!open) return;
@@ -134,6 +129,7 @@ export function NavDrawer({
                 <li key={item.href}>
                   <Link
                     href={item.href}
+                    onClick={() => setOpen(false)}
                     className={
                       "flex min-h-12 items-center rounded-xl px-4 text-sm font-medium transition-colors " +
                       (active
@@ -159,7 +155,7 @@ export function NavDrawer({
             <div className="text-xs text-stone-500">{user.role}</div>
           </div>
           {/* Logout */}
-          <form action={logoutAction}>
+          <form action={logoutAction} onSubmit={() => setOpen(false)}>
             <button
               type="submit"
               className="flex w-full min-h-11 items-center gap-3 rounded-xl px-4 text-sm font-medium text-red-600 hover:bg-red-50 active:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400/40 transition-colors"

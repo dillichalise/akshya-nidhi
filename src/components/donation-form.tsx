@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { type FormState } from "@/actions/types";
-import { amountInWords, formatAmountInput, formatNPR } from "@/lib/format";
+import { amountInWords, formatAmountInput } from "@/lib/format";
 import { receiptFileName } from "@/lib/receipts/shared";
 import { BsDatePicker } from "./bs-date-picker";
 import { ReceiptPreviewModal } from "./receipt-preview-button";
@@ -47,48 +47,34 @@ export function DonationForm({
     v.amount ? formatAmountInput(v.amount) : "",
   );
 
-  // Reset amount when switching away from cash
-  useEffect(() => {
-    if (donationType !== "cash") {
+  const [receiptDismissedFor, setReceiptDismissedFor] = useState<string | null>(
+    null,
+  );
+
+  const changeDonationType = (nextType: "cash" | "non_cash" | "other") => {
+    setDonationType(nextType);
+    if (nextType !== "cash") {
       setRawAmount("");
       setDisplayAmount("");
     }
-  }, [donationType]);
+  };
 
-  // Receipt modal state — only relevant on the "add" form (not edit).
-  const [receiptOpen, setReceiptOpen] = useState(false);
-  // Track the last saved receiptId so closing and re-opening modal still works.
-  const [savedReceiptId, setSavedReceiptId] = useState<string | null>(null);
-  const [savedDate, setSavedDate] = useState<string>("");
-
-  // After a successful save, open the receipt modal and clear the amount preview.
-  useEffect(() => {
-    if (state.status === "success" && v.receiptId) {
-      setSavedReceiptId(v.receiptId);
-      setSavedDate(v.donationDate ?? "");
-      setReceiptOpen(true);
-      setRawAmount("");
-      setDisplayAmount("");
-      // Focus will move to the name field once the modal is closed
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.status, v._ts]); // _ts changes on each success, re-running even if receiptId stays same
+  const savedReceiptId =
+    state.status === "success" ? (v.receiptId ?? null) : null;
+  const savedDate = v.donationDate ?? "";
+  const receiptToken = v._ts ?? "";
+  const receiptOpen = Boolean(
+    savedReceiptId && receiptToken && receiptDismissedFor !== receiptToken,
+  );
 
   // When the modal closes, focus the first field so the next entry is quick.
   const handleModalClose = () => {
-    setReceiptOpen(false);
+    setReceiptDismissedFor(receiptToken);
     nameRef.current?.focus();
   };
 
   // Derive formatted preview values from rawAmount (only for cash donations).
   const amountNum = Number(rawAmount);
-  const formattedAmount =
-    donationType === "cash" &&
-    rawAmount.trim() !== "" &&
-    Number.isFinite(amountNum) &&
-    amountNum > 0
-      ? formatNPR(amountNum, locale)
-      : null;
   const wordsAmount =
     donationType === "cash" &&
     rawAmount.trim() !== "" &&
@@ -263,7 +249,7 @@ export function DonationForm({
                 value="cash"
                 checked={donationType === "cash"}
                 onChange={(e) =>
-                  setDonationType(
+                  changeDonationType(
                     e.target.value as "cash" | "non_cash" | "other",
                   )
                 }
@@ -280,7 +266,7 @@ export function DonationForm({
                 value="non_cash"
                 checked={donationType === "non_cash"}
                 onChange={(e) =>
-                  setDonationType(
+                  changeDonationType(
                     e.target.value as "cash" | "non_cash" | "other",
                   )
                 }
@@ -297,7 +283,7 @@ export function DonationForm({
                 value="other"
                 checked={donationType === "other"}
                 onChange={(e) =>
-                  setDonationType(
+                  changeDonationType(
                     e.target.value as "cash" | "non_cash" | "other",
                   )
                 }

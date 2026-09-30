@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import {
   Bar,
   BarChart,
@@ -20,6 +20,22 @@ type Props = {
   yLabel: string;
   tooltipLabel: string;
 };
+
+const NARROW_QUERY = "(max-width: 480px)";
+
+function subscribeNarrow(callback: () => void) {
+  const query = window.matchMedia(NARROW_QUERY);
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+function getNarrowSnapshot() {
+  return window.matchMedia(NARROW_QUERY).matches;
+}
+
+function getNarrowServerSnapshot() {
+  return false;
+}
 
 /** Short BS label — day number only on mobile, "DD Mon" on wider screens */
 function bsDayLabel(adYmd: string, locale: string, short: boolean): string {
@@ -45,14 +61,11 @@ export function DonationBarChart({
   tooltipLabel,
 }: Props) {
   // Detect narrow screens client-side so we can shorten labels
-  const [narrow, setNarrow] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 480px)");
-    setNarrow(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setNarrow(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
+  const narrow = useSyncExternalStore(
+    subscribeNarrow,
+    getNarrowSnapshot,
+    getNarrowServerSnapshot,
+  );
 
   const chartData = data.map((d) => ({
     day: bsDayLabel(d.date, locale, narrow),

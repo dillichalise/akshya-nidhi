@@ -12,7 +12,12 @@ import {
 } from "@/db/queries/expenditures";
 import { can } from "@/lib/auth/permissions";
 import { requirePermission } from "@/lib/auth/session";
-import { formatDate, formatNPR, localizedCount, toNepaliDigits } from "@/lib/format";
+import {
+  formatDate,
+  formatNPR,
+  localizedCount,
+  toNepaliDigits,
+} from "@/lib/format";
 
 const PAGE_SIZE = 20;
 const ymd = /^\d{4}-\d{2}-\d{2}$/;
@@ -137,15 +142,11 @@ export default async function ExpendituresPage({
     return `/api/expenditures/excel?${u}`;
   })();
 
-  const SortTh = ({
-    col,
-    className,
-    children,
-  }: {
-    col: ExpenditureSortColumn;
-    className?: string;
-    children: React.ReactNode;
-  }) => (
+  const renderSortTh = (
+    col: ExpenditureSortColumn,
+    children: React.ReactNode,
+    className?: string,
+  ) => (
     <th className={`px-3 py-2 ${className ?? ""}`}>
       <Link
         href={sortHref(col)}
@@ -200,14 +201,14 @@ export default async function ExpendituresPage({
             <table className="w-full text-left text-sm">
               <thead className="border-b border-stone-200 bg-stone-50 text-stone-600">
                 <tr>
-                  <SortTh col="expenditureDate">{t("date")}</SortTh>
-                  <SortTh col="title">{t("title")}</SortTh>
-                  <SortTh col="amount" className="text-right">
-                    {t("amount")}
-                  </SortTh>
-                  <SortTh col="returnAmount" className="text-right">
-                    {t("returnAmount")}
-                  </SortTh>
+                  {renderSortTh("expenditureDate", t("date"))}
+                  {renderSortTh("title", t("title"))}
+                  {renderSortTh("amount", t("amount"), "text-right")}
+                  {renderSortTh(
+                    "returnAmount",
+                    t("returnAmount"),
+                    "text-right",
+                  )}
                   <th className="px-3 py-2 text-right">{t("actualSpend")}</th>
                   <th className="px-3 py-2">{t("remarks")}</th>
                   <th className="px-3 py-2">{t("addedBy")}</th>
@@ -218,11 +219,10 @@ export default async function ExpendituresPage({
               </thead>
               <tbody className="divide-y divide-stone-100">
                 {rows.map((r) => {
-                  const net =
-                    (
-                      BigInt(Math.round(Number(r.amount) * 100)) -
-                      BigInt(Math.round(Number(r.returnAmount) * 100))
-                    ).toString();
+                  const net = (
+                    BigInt(Math.round(Number(r.amount) * 100)) -
+                    BigInt(Math.round(Number(r.returnAmount) * 100))
+                  ).toString();
                   const netFormatted = formatNPR(
                     (Number(net) / 100).toFixed(2),
                     locale,
@@ -305,7 +305,10 @@ export default async function ExpendituresPage({
               {/* Totals footer */}
               <tfoot className="border-t-2 border-stone-300 bg-amber-50 font-semibold text-sm">
                 <tr>
-                  <td colSpan={2} className="px-3 py-2 text-right text-stone-600">
+                  <td
+                    colSpan={2}
+                    className="px-3 py-2 text-right text-stone-600"
+                  >
                     {tc("total")}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
@@ -317,7 +320,7 @@ export default async function ExpendituresPage({
                   <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
                     {formatNPR(totals.net, locale)}
                   </td>
-                  <td colSpan={(canEdit || canDelete) ? 3 : 2} />
+                  <td colSpan={canEdit || canDelete ? 3 : 2} />
                 </tr>
               </tfoot>
             </table>
@@ -326,11 +329,10 @@ export default async function ExpendituresPage({
           {/* Cards on phones */}
           <ul className="space-y-3 md:hidden">
             {rows.map((r, i) => {
-              const net =
-                (
-                  BigInt(Math.round(Number(r.amount) * 100)) -
-                  BigInt(Math.round(Number(r.returnAmount) * 100))
-                ).toString();
+              const net = (
+                BigInt(Math.round(Number(r.amount) * 100)) -
+                BigInt(Math.round(Number(r.returnAmount) * 100))
+              ).toString();
               const netFormatted = formatNPR(
                 (Number(net) / 100).toFixed(2),
                 locale,
@@ -344,8 +346,9 @@ export default async function ExpendituresPage({
                     <div className="min-w-0">
                       <div className="font-medium">{r.title}</div>
                       <div className="mt-0.5 text-sm text-stone-500">
-                        {toNepaliDigits(i + 1 + (page - 1) * PAGE_SIZE, locale)}.{" "}
-                        {formatDate(r.expenditureDate, locale)} · {r.createdByName}
+                        {toNepaliDigits(i + 1 + (page - 1) * PAGE_SIZE, locale)}
+                        . {formatDate(r.expenditureDate, locale)} ·{" "}
+                        {r.createdByName}
                       </div>
                       {r.remarks && (
                         <div className="mt-0.5 text-sm text-stone-400">
@@ -359,7 +362,8 @@ export default async function ExpendituresPage({
                       </div>
                       {Number(r.returnAmount) > 0 && (
                         <div className="text-xs text-green-700 tabular-nums">
-                          {t("returnAmount")}: {formatNPR(r.returnAmount, locale)}
+                          {t("returnAmount")}:{" "}
+                          {formatNPR(r.returnAmount, locale)}
                         </div>
                       )}
                     </div>

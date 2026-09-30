@@ -134,7 +134,9 @@ export default async function DonationsPage({
   const amountFilterValid =
     (!minAmtInput || amountFilterPattern.test(minAmtInput)) &&
     (!maxAmtInput || amountFilterPattern.test(maxAmtInput)) &&
-    (!minAmtInput || !maxAmtInput || BigInt(maxAmtInput) >= BigInt(minAmtInput));
+    (!minAmtInput ||
+      !maxAmtInput ||
+      BigInt(maxAmtInput) >= BigInt(minAmtInput));
   const minAmt = amountFilterValid && minAmtInput ? minAmtInput : undefined;
   const maxAmt = amountFilterValid && maxAmtInput ? maxAmtInput : undefined;
   const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
@@ -196,15 +198,11 @@ export default async function DonationsPage({
     return `/donations?${u}`;
   };
 
-  const SortTh = ({
-    col,
-    className,
-    children,
-  }: {
-    col: SortColumn;
-    className?: string;
-    children: React.ReactNode;
-  }) => (
+  const renderSortTh = (
+    col: SortColumn,
+    children: React.ReactNode,
+    className?: string,
+  ) => (
     <th className={`px-3 py-2 ${className ?? ""}`}>
       <Link
         href={sortHref(col)}
@@ -242,7 +240,10 @@ export default async function DonationsPage({
 
       {!amountFilterValid && (
         <p role="alert" className="mb-3 text-sm text-red-700">
-          {minAmtInput && maxAmtInput && amountFilterPattern.test(minAmtInput) && amountFilterPattern.test(maxAmtInput)
+          {minAmtInput &&
+          maxAmtInput &&
+          amountFilterPattern.test(minAmtInput) &&
+          amountFilterPattern.test(maxAmtInput)
             ? tc("maxMustBeAtLeastMin")
             : tc("amountFilterInvalid")}
         </p>
@@ -263,14 +264,12 @@ export default async function DonationsPage({
             <table className="w-full text-left text-sm">
               <thead className="border-b border-stone-200 bg-stone-50 text-stone-600">
                 <tr>
-                  <SortTh col="donationDate">{t("date")}</SortTh>
-                  <SortTh col="donorName">{t("name")}</SortTh>
+                  {renderSortTh("donationDate", t("date"))}
+                  {renderSortTh("donorName", t("name"))}
                   <th className="px-3 py-2">{t("phone")}</th>
-                  <SortTh col="address">{t("address")}</SortTh>
+                  {renderSortTh("address", t("address"))}
                   <th className="px-3 py-2">{t("donationType")}</th>
-                  <SortTh col="amount" className="text-right">
-                    {t("amount")}
-                  </SortTh>
+                  {renderSortTh("amount", t("amount"), "text-right")}
                   <th className="px-3 py-2">{t("remarks")}</th>
                   <th className="px-3 py-2">{t("addedBy")}</th>
                   {(canEdit || canDelete || canReceipt) && (
